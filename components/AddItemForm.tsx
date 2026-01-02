@@ -127,7 +127,7 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
         <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} className={inputBaseClasses} required />
       </div>
       <div>
-        <label htmlFor="photo" className={labelBaseClasses}>Photo</label>
+        <label htmlFor="photo" className={labelBaseClasses}>Foto</label>
         <input
           type="file"
           id="photo"
@@ -137,18 +137,18 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
           className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-zinc-600 file:text-brand-pink dark:file:text-brand-pink-dark hover:file:bg-rose-100 dark:hover:file:bg-zinc-500"
         />
         {uploading && <p className="text-xs text-brand-pink mt-1 animate-pulse">Wird hochgeladen...</p>}
-        {photo && <img src={photo} alt="Preview" className="mt-2 h-24 w-24 object-cover rounded-md" />}
+        {photo && <img src={photo} alt="Vorschau" className="mt-2 h-24 w-24 object-cover rounded-md" />}
       </div>
       <div className={`grid grid-cols-1 ${![ItemType.Henkel, ItemType.Accessoire].includes(type) ? 'md:grid-cols-2' : ''} gap-4`}>
         <div>
-          <label htmlFor="type" className={labelBaseClasses}>Type</label>
+          <label htmlFor="type" className={labelBaseClasses}>Kategorie</label>
           <select id="type" value={type} onChange={(e) => setType(e.target.value as ItemType)} className={inputBaseClasses}>
             {Object.values(ItemType).map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         {![ItemType.Henkel, ItemType.Accessoire].includes(type) && (
           <div>
-            <label htmlFor="shape" className={labelBaseClasses}>Shape</label>
+            <label htmlFor="shape" className={labelBaseClasses}>Form</label>
             <select id="shape" value={shape} onChange={(e) => setShape(e.target.value as ItemShape)} className={inputBaseClasses}>
               {Object.values(ItemShape).map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -156,7 +156,7 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
         )}
       </div>
       <div>
-        <label htmlFor="color" className={labelBaseClasses}>Color</label>
+        <label htmlFor="color" className={labelBaseClasses}>Farbe</label>
         {type === ItemType.Kombination ? (
           <div className="mt-2 p-3 border border-gray-300 dark:border-zinc-600 rounded-md max-h-48 overflow-y-auto bg-gray-50 dark:bg-zinc-800">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -208,7 +208,7 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
         </>
       )}
       <div>
-        <label htmlFor="usageCount" className={labelBaseClasses}>Times Worn</label>
+        <label htmlFor="usageCount" className={labelBaseClasses}>Wie oft getragen</label>
         <input type="number" id="usageCount" value={usageCount} onChange={(e) => setUsageCount(e.target.value)} className={inputBaseClasses} />
       </div>
       <div>
@@ -250,7 +250,7 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
           )}
         </div>
         <div className="flex items-center">
-          <button type="button" onClick={onClose} className="bg-white dark:bg-zinc-600 py-2 px-4 border border-gray-300 dark:border-zinc-500 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark mr-3">Cancel</button>
+          <button type="button" onClick={onClose} className="bg-white dark:bg-zinc-600 py-2 px-4 border border-gray-300 dark:border-zinc-500 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark mr-3">Abbrechen</button>
           <button type="submit" disabled={uploading} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark disabled:opacity-50">
             {initialData ? 'Änderungen speichern' : 'Teil hinzufügen'}
           </button>
