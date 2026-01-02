@@ -56,6 +56,7 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
     const [selectedBody, setSelectedBody] = useState<Item | null>(null);
     const [selectedFlap, setSelectedFlap] = useState<Item | null>(null);
     const [selectedHandle, setSelectedHandle] = useState<Item | null>(null);
+    const [selectedAccessoire, setSelectedAccessoire] = useState<Item | null>(null);
     const [kombinationName, setKombinationName] = useState('');
     const [kombinationPhoto, setKombinationPhoto] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -66,6 +67,7 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
         return items.filter(i => i.type === ItemType.Klappe && !i.isSold && i.shape === selectedBody.shape);
     }, [items, selectedBody]);
     const availableHandles = useMemo(() => items.filter(i => i.type === ItemType.Henkel && !i.isSold), [items]);
+    const availableAccessoires = useMemo(() => items.filter(i => i.type === ItemType.Accessoire && !i.isSold), [items]);
 
     const handleNext = () => setCurrentStep(prev => prev + 1);
     const handleBack = () => setCurrentStep(prev => prev - 1);
@@ -89,10 +91,17 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
             alert("Bitte geben Sie der Kombination einen Namen.");
             return;
         }
-        if (!selectedBody || !selectedFlap || !selectedHandle) return;
+        if (!selectedBody || !selectedFlap) return;
 
-        const notes = `Kombination aus:\n- ${selectedBody.name} (Körper)\n- ${selectedFlap.name} (Klappe)\n- ${selectedHandle.name} (Henkel)`;
-        const combinedColors = [...new Set([...selectedBody.color, ...selectedFlap.color, ...selectedHandle.color])];
+        const parts = [
+            { item: selectedBody, label: 'Körper' },
+            { item: selectedFlap, label: 'Klappe' },
+            selectedHandle && { item: selectedHandle, label: 'Henkel' },
+            selectedAccessoire && { item: selectedAccessoire, label: 'Accessoire' }
+        ].filter(Boolean) as { item: Item; label: string }[];
+
+        const notes = `Kombination aus:\n${parts.map(p => `- ${p.item.name} (${p.label})`).join('\n')}`;
+        const combinedColors = [...new Set(parts.flatMap(p => p.item.color))];
         const finalPhoto = kombinationPhoto || '';
 
         const newKombination: Item = {
@@ -145,9 +154,25 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
             case 4:
                 return (
                     <div>
-                        <h3 className="font-semibold text-center mb-4 text-gray-700 dark:text-gray-300">Schritt 4: Kombination benennen & speichern</h3>
-                        <div className="grid grid-cols-3 gap-2 mb-4 p-2 bg-gray-50 dark:bg-zinc-900/50 rounded-lg">
-                            {[selectedBody, selectedFlap, selectedHandle].map(item => item && (
+                        <h3 className="font-semibold text-center mb-4 text-gray-700 dark:text-gray-300">Schritt 4: Wähle ein Accessoire (optional)</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 p-2">
+                            {availableAccessoires.map(item => <SelectionCard key={item.id} item={item} isSelected={selectedAccessoire?.id === item.id} onClick={() => setSelectedAccessoire(item)} />)}
+                        </div>
+                    </div>
+                );
+            case 5:
+                const selectedItems = [
+                    { item: selectedBody, label: 'Körper' },
+                    { item: selectedFlap, label: 'Klappe' },
+                    { item: selectedHandle, label: 'Henkel' },
+                    { item: selectedAccessoire, label: 'Accessoire' }
+                ].filter(p => p.item);
+
+                return (
+                    <div>
+                        <h3 className="font-semibold text-center mb-4 text-gray-700 dark:text-gray-300">Schritt 5: Kombination benennen & speichern</h3>
+                        <div className={`grid ${selectedItems.length > 3 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mb-4 p-2 bg-gray-50 dark:bg-zinc-900/50 rounded-lg`}>
+                            {selectedItems.map(({ item, label }) => item && (
                                 <div key={item.id}>
                                     {item.photo ? (
                                         <img src={item.photo} alt={item.name} className="rounded-lg aspect-square object-cover" />
@@ -157,6 +182,7 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
                                         </div>
                                     )}
                                     <p className="text-xs text-center mt-1 text-gray-600 dark:text-gray-400 truncate">{item.name}</p>
+                                    <p className="text-[10px] text-center text-gray-400 uppercase">{label}</p>
                                 </div>
                             ))}
                         </div>
@@ -194,28 +220,44 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
     const isNextDisabled = () => {
         if (currentStep === 1 && !selectedBody) return true;
         if (currentStep === 2 && !selectedFlap) return true;
-        if (currentStep === 3 && !selectedHandle) return true;
         return false;
+    };
+
+    const handleSkip = () => {
+        if (currentStep === 3) setSelectedHandle(null);
+        if (currentStep === 4) setSelectedAccessoire(null);
+        handleNext();
     };
 
     return (
         <div className="flex flex-col h-full">
             <div className="flex-shrink-0 pt-4">
-                <StepIndicator currentStep={currentStep} totalSteps={4} />
+                <StepIndicator currentStep={currentStep} totalSteps={5} />
             </div>
             <div className="flex-grow overflow-y-auto py-4">
                 {renderStepContent()}
             </div>
             <div className="flex-shrink-0 flex justify-between items-center pt-4 border-t dark:border-zinc-700">
-                <button
-                    type="button"
-                    onClick={handleBack}
-                    disabled={currentStep === 1}
-                    className="bg-white dark:bg-zinc-600 py-2 px-4 border border-gray-300 dark:border-zinc-500 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Zurück
-                </button>
-                {currentStep < 4 ? (
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={handleBack}
+                        disabled={currentStep === 1}
+                        className="bg-white dark:bg-zinc-600 py-2 px-4 border border-gray-300 dark:border-zinc-500 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Zurück
+                    </button>
+                    {(currentStep === 3 || currentStep === 4) && (
+                        <button
+                            type="button"
+                            onClick={handleSkip}
+                            className="bg-white dark:bg-zinc-600 py-2 px-4 border border-gray-300 dark:border-zinc-500 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark"
+                        >
+                            Überspringen
+                        </button>
+                    )}
+                </div>
+                {currentStep < 5 ? (
                     <button
                         type="button"
                         onClick={handleNext}

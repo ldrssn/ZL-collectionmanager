@@ -170,85 +170,72 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
         )}
       </div>
       <div>
-        <label htmlFor="color" className={labelBaseClasses}>Farbe</label>
-        {type === ItemType.Kombination ? (
-          <div className="mt-2 p-3 border border-gray-300 dark:border-zinc-600 rounded-md max-h-48 overflow-y-auto bg-gray-50 dark:bg-zinc-800">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {COLORS.map(c => (
-                <div key={c} className="flex items-center">
-                  <input
-                    id={`color-${c}`}
-                    type="checkbox"
-                    value={c}
-                    checked={color.includes(c)}
-                    onChange={(e) => {
-                      let newColors;
-                      if (e.target.checked) {
-                        newColors = [...color, c];
-                      } else {
-                        newColors = color.filter(selected => selected !== c);
-                      }
-                      newColors.sort((a, b) => COLORS.indexOf(a) - COLORS.indexOf(b));
-                      setColor(newColors);
-                    }}
-                    className="h-4 w-4 text-brand-pink bg-white border-gray-300 rounded focus:ring-brand-pink dark:bg-zinc-700 dark:border-zinc-600"
-                  />
-                  <label htmlFor={`color-${c}`} className="ml-2 text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full border border-gray-400" style={{ background: COLOR_MAP[c] }}></span>
-                    {c}
-                  </label>
-                </div>
-              ))}
+        <label htmlFor="color" className={labelBaseClasses}>Farbe(n)</label>
+        <div className="relative" ref={colorDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsColorDropdownOpen(!isColorDropdownOpen)}
+            className="relative w-full bg-white dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-brand-pink focus:border-brand-pink sm:text-sm"
+          >
+            <div className="flex items-center flex-wrap gap-1.5">
+              {color.length > 0 ? (
+                color.map(c => (
+                  <div key={c} className="flex items-center gap-1.5 bg-gray-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-full border border-gray-200 dark:border-zinc-600">
+                    <span className="w-3 h-3 rounded-full border border-gray-400 flex-shrink-0" style={{ background: COLOR_MAP[c] }}></span>
+                    <span className="text-xs text-gray-700 dark:text-gray-200">{c}</span>
+                  </div>
+                ))
+              ) : (
+                <span className="text-gray-400">Farbe wählen...</span>
+              )}
             </div>
-          </div>
-        ) : (
-          <div className="relative" ref={colorDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsColorDropdownOpen(!isColorDropdownOpen)}
-              className="relative w-full bg-white dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-brand-pink focus:border-brand-pink sm:text-sm"
-            >
-              <div className="flex items-center">
-                <span className="w-3 h-3 rounded-full border border-gray-400 flex-shrink-0" style={{ background: COLOR_MAP[color[0] || COLORS[0]] }}></span>
-                <span className="ml-3 block truncate text-gray-700 dark:text-gray-200">{color[0] || COLORS[0]}</span>
-              </div>
-              <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </span>
-            </button>
+            <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </span>
+          </button>
 
-            {isColorDropdownOpen && (
-              <ul className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-700 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-                {COLORS.map((c) => (
+          {isColorDropdownOpen && (
+            <ul className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-700 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+              {COLORS.map((c) => {
+                const isSelected = color.includes(c);
+                return (
                   <li
                     key={c}
-                    className={`text-gray-900 dark:text-gray-200 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-brand-pink hover:text-white ${color[0] === c ? 'bg-brand-pink/10 dark:bg-zinc-600' : ''}`}
-                    onClick={() => {
-                      setColor([c]);
-                      setIsColorDropdownOpen(false);
+                    className={`text-gray-900 dark:text-gray-200 cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-brand-pink/10 dark:hover:bg-zinc-600 transition-colors ${isSelected ? 'bg-brand-pink/5' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      let newColors;
+                      if (isSelected) {
+                        newColors = color.filter(selected => selected !== c);
+                      } else {
+                        newColors = [...color, c];
+                      }
+                      // Keep the same order as in COLORS array
+                      newColors.sort((a, b) => COLORS.indexOf(a) - COLORS.indexOf(b));
+                      setColor(newColors);
                     }}
                   >
                     <div className="flex items-center">
                       <span className="w-3 h-3 rounded-full border border-gray-400 flex-shrink-0" style={{ background: COLOR_MAP[c] }}></span>
-                      <span className={`ml-3 block truncate ${color[0] === c ? 'font-semibold' : 'font-normal'}`}>
+                      <span className={`ml-3 block truncate ${isSelected ? 'font-semibold text-brand-pink' : 'font-normal'}`}>
                         {c}
                       </span>
                     </div>
-                    {color[0] === c && (
-                      <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-brand-pink hover:text-white">
+                    {isSelected && (
+                      <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-brand-pink">
                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       </span>
                     )}
                   </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
       {type !== ItemType.Kombination && (
         <>
