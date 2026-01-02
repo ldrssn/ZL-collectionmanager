@@ -3,11 +3,11 @@ import { Item, ItemType, ItemShape } from './types';
 export const COLORS = [
   'Schwarz', 'Weiß', 'Grau', 'Silber', 'Gold',
   'Taupe', 'Creme', 'Nude', 'Braun', 'Cognac',
-  'Gelb', 'Orange',
-  'Fuchsia', 'Violett', 'Flieder', 'Rosa', 'Rot', 'Bordeaux',
-  'Hellblau', 'Blau', 'Marineblau',
-  'Hellgrün', 'Grün', 'Waldgrün',
-  'Mint', 'Türkis', 'Petrol'
+  'Gelb', 'Orange', 'Koralle',
+  'Fuchsia', 'Violett', 'Flieder', 'Rosa', 'Rot', 'Dunkelrot',
+  'Hellblau', 'Blau', 'Dunkelblau',
+  'Hellgrün', 'Grün', 'Dunkelgrün', 'Oliv',
+  'Mint', 'Türkis', 'Petrol', 'Bunt'
 ];
 
 export const COLOR_MAP: { [key: string]: string } = {
@@ -23,25 +23,31 @@ export const COLOR_MAP: { [key: string]: string } = {
   'Cognac': '#c17f4a',
   'Gelb': '#ffd966',
   'Orange': '#e69138',
+  'Koralle': '#DB6861',
   'Fuchsia': '#c90076',
   'Violett': '#6a329f',
   'Flieder': '#b4a7d6',
   'Rosa': '#ead1dc',
   'Rot': '#A52A2A',
-  'Bordeaux': '#660000',
+  'Dunkelrot': '#660000',
   'Hellblau': '#cfe2f3',
   'Blau': '#2986cc',
-  'Marineblau': '#073763',
+  'Dunkelblau': '#073763',
   'Hellgrün': '#8fce00',
   'Grün': '#38761d',
-  'Waldgrün': '#1f3f0f',
+  'Dunkelgrün': '#1f3f0f',
+  'Oliv': '#7B7D58',
   'Mint': '#97ead1',
   'Türkis': '#8af0fb',
   'Petrol': '#134f5c',
+  'Bunt': 'conic-gradient(from 0deg, red, yellow, lime, aqua, blue, magenta, red)',
 };
 
 // Generates a placeholder image URL
-export const getPlaceholder = (type: string, color: string, text: string) => `https://placehold.co/280x256/${color.substring(1)}/333333?text=${encodeURIComponent(type)}\\n${text}`;
+export const getPlaceholder = (type: string, color: string, text: string) => {
+  const hex = color.startsWith('#') ? color.substring(1) : 'cccccc';
+  return `https://placehold.co/280x256/${hex}/333333?text=${encodeURIComponent(type)}\\n${text}`;
+};
 
 export const SAMPLE_ITEMS: Item[] = [
   { id: '1', name: 'Rote Verführung', photo: getPlaceholder('Klappe', COLOR_MAP['Rot'], 'Rote Verführung'), type: ItemType.Klappe, shape: ItemShape.Square, color: ['Rot'], price: 125.00, purchasePrice: 125.00, usageCount: 5, isSold: false, notes: 'Passt gut zu schwarzen Taschen.' },
@@ -56,9 +62,9 @@ export const SAMPLE_ITEMS: Item[] = [
   { id: '10', name: 'Schneeweiß', photo: getPlaceholder('Henkel', COLOR_MAP['Weiß'], 'Schneeweiß'), type: ItemType.Henkel, shape: ItemShape.Rund, color: ['Weiß'], price: 80.00, usageCount: 4, isSold: false },
   { id: '11', name: 'Graue Maus', photo: getPlaceholder('Körper', COLOR_MAP['Grau'], 'Graue Maus'), type: ItemType.Körper, shape: ItemShape.Square, color: ['Grau'], price: 240.00, usageCount: 7, isSold: false },
   { id: '12', name: 'Türkis-Tupfer', photo: getPlaceholder('Klappe', COLOR_MAP['Türkis'], 'Türkis-Tupfer'), type: ItemType.Klappe, shape: ItemShape.Square, color: ['Türkis'], price: 115.00, usageCount: 9, isSold: false },
-  { id: '13', name: 'Marine-Look', photo: getPlaceholder('Henkel', COLOR_MAP['Marineblau'], 'Marine-Look'), type: ItemType.Henkel, shape: ItemShape.Rund, color: ['Marineblau'], price: 90.00, usageCount: 6, isSold: false },
+  { id: '13', name: 'Marine-Look', photo: getPlaceholder('Henkel', COLOR_MAP['Dunkelblau'], 'Marine-Look'), type: ItemType.Henkel, shape: ItemShape.Rund, color: ['Dunkelblau'], price: 90.00, usageCount: 6, isSold: false },
   { id: '14', name: 'Lindgrüner Frosch', photo: getPlaceholder('Klappe', COLOR_MAP['Hellgrün'], 'Lindgrüner Frosch'), type: ItemType.Klappe, shape: ItemShape.Rund, color: ['Hellgrün'], price: 105.00, purchasePrice: 105.00, usageCount: 3, isSold: false },
-  { id: '15', name: 'Bordeaux-Rot', photo: getPlaceholder('Körper', COLOR_MAP['Bordeaux'], 'Bordeaux-Rot'), type: ItemType.Körper, shape: ItemShape.Square, color: ['Bordeaux'], price: 320.00, usageCount: 1, isSold: false },
+  { id: '15', name: 'Bordeaux-Rot', photo: getPlaceholder('Körper', COLOR_MAP['Dunkelrot'], 'Bordeaux-Rot'), type: ItemType.Körper, shape: ItemShape.Square, color: ['Dunkelrot'], price: 320.00, usageCount: 1, isSold: false },
   { id: '16', name: 'Creme Classic', photo: getPlaceholder('Henkel', COLOR_MAP['Creme'], 'Creme Classic'), type: ItemType.Henkel, shape: ItemShape.Square, color: ['Creme'], price: 70.00, usageCount: 25, isSold: false },
   { id: '17', name: 'Senfgelber Herbst', photo: getPlaceholder('Klappe', COLOR_MAP['Gelb'], 'Senfgelber Herbst'), type: ItemType.Klappe, shape: ItemShape.Square, color: ['Gelb'], price: 120.00, usageCount: 11, isSold: true, sellingPrice: 100.00, notes: 'Geringe Gebrauchsspuren.' },
   { id: '18', name: 'Zartes Altrosa', photo: getPlaceholder('Körper', COLOR_MAP['Rosa'], 'Zartes Altrosa'), type: ItemType.Körper, shape: ItemShape.Rund, color: ['Rosa'], price: 275.00, usageCount: 14, isSold: false },

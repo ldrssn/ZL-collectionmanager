@@ -24,3 +24,13 @@ export const useAuth = () => {
 
     return { user, loading };
 };
+
+export const updateUserEmail = async (email: string) => {
+    const { data, error } = await supabase.auth.updateUser({ email });
+    return { data, error };
+};
+
+export const updateUserPassword = async (password: string) => {
+    const { data, error } = await supabase.auth.updateUser({ password });
+    return { data, error };
+};

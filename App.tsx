@@ -14,6 +14,7 @@ import { useAuth } from './services/authService';
 import { Auth } from './components/Auth';
 import { supabase } from './services/supabase';
 import { MigrationAssistant } from './components/MigrationAssistant';
+import AccountModal from './components/AccountModal';
 
 type Theme = 'light' | 'dark';
 
@@ -31,15 +32,14 @@ const App: React.FC = () => {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isKombiBuilderOpen, setIsKombiBuilderOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState<Theme>('light');
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
   const { user, loading: authLoading } = useAuth();
   const [isLoadedFromCloud, setIsLoadedFromCloud] = useState(false);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
@@ -94,17 +94,6 @@ const App: React.FC = () => {
   // We no longer use a global saveItems in useEffect because it's too risky for cloud sync.
   // Instead, we call saveItemToCloud on specific actions.
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   // Persist items to local storage when user is offline AND items are not from cloud
   useEffect(() => {
@@ -358,12 +347,20 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-gray-50 dark:bg-zinc-900 min-h-screen flex flex-col">
-      <Header theme={theme} onThemeToggle={toggleTheme} onLogout={handleLogout} showLogout={!!user} />
+      <Header theme={theme} onThemeToggle={toggleTheme} onOpenAccount={() => setIsAccountModalOpen(true)} showLogout={!!user} />
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 w-full flex-grow flex flex-col items-center justify-center">
         {!user ? (
           <Auth />
         ) : (
           <>
+            <AccountModal
+              isOpen={isAccountModalOpen}
+              onClose={() => setIsAccountModalOpen(false)}
+              userEmail={user.email}
+              onLogout={handleLogout}
+              onExport={handleExport}
+              onImportClick={handleImportClick}
+            />
             <MigrationAssistant userId={user.id} onMigrationComplete={async () => {
               const cloudItems = await fetchItemsFromCloud(user.id);
               setItems(cloudItems);
@@ -414,14 +411,6 @@ const App: React.FC = () => {
                       <button onClick={() => setIsStatsModalOpen(true)} className="p-2 rounded-full text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark" aria-label="Statistik anzeigen" title="Statistik anzeigen">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg>
                       </button>
-                      <button onClick={handleImportClick} className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-zinc-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark" title="Sammlung importieren">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                        <span className="hidden lg:inline">Importieren</span>
-                      </button>
-                      <button onClick={handleExport} className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-zinc-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark" title="Sammlung exportieren">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        <span className="hidden lg:inline">Exportieren</span>
-                      </button>
                       <div className="h-6 border-l border-gray-300 dark:border-zinc-600 mx-2"></div>
                       <button onClick={() => setIsKombiBuilderOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark" title="Eine neue Kombination aus bestehenden Teilen erstellen">
                         <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -448,22 +437,13 @@ const App: React.FC = () => {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10zm0 5.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 01-.75-.75z" clipRule="evenodd" /></svg>
                         </button>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setIsFiltersOpen(prev => !prev)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark" aria-label="Filter anzeigen/verstecken">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 12.414V17a1 1 0 01-1.447.894l-3-2A1 1 0 017 15v-2.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" /></svg>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setIsStatsModalOpen(true)} className="p-2 rounded-full text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark" aria-label="Statistik anzeigen" title="Statistik anzeigen">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg>
                         </button>
-                        <div className="relative" ref={menuRef}>
-                          <button onClick={() => setIsMenuOpen(prev => !prev)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark" aria-label="Menü öffnen">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
-                          </button>
-                          {isMenuOpen && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-700 rounded-md shadow-lg py-1 z-20 ring-1 ring-black ring-opacity-5">
-                              <a href="#" onClick={(e) => { e.preventDefault(); setIsStatsModalOpen(true); setIsMenuOpen(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-600">Statistik</a>
-                              <a href="#" onClick={(e) => { e.preventDefault(); handleImportClick(); setIsMenuOpen(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-600">Importieren</a>
-                              <a href="#" onClick={(e) => { e.preventDefault(); handleExport(); setIsMenuOpen(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-600">Exportieren</a>
-                            </div>
-                          )}
-                        </div>
+                        <button onClick={() => setIsFiltersOpen(prev => !prev)} className="p-2 rounded-md bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark" aria-label="Filter anzeigen/verstecken">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700 dark:text-gray-200" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 12.414V17a1 1 0 01-1.447.894l-3-2A1 1 0 017 15v-2.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" /></svg>
+                        </button>
                       </div>
                     </div>
                     {/* Row 2: CTAs */}

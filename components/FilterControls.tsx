@@ -68,14 +68,14 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, so
           >
             <span className="flex items-center">
               {filters.color !== 'all' && (
-                <span style={{ backgroundColor: COLOR_MAP[filters.color] }} className="inline-block h-4 w-4 flex-shrink-0 rounded-full border border-gray-300"></span>
+                <span style={{ background: COLOR_MAP[filters.color] }} className="inline-block h-4 w-4 flex-shrink-0 rounded-full border border-gray-300"></span>
               )}
               <span className="ml-3 block truncate text-gray-900 dark:text-gray-100">{filters.color === 'all' ? 'Alle Farben' : filters.color}</span>
             </span>
             <span className="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
-                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M10 3a.75.75 0 01.53.22l3.5 3.5a.75.75 0 01-1.06 1.06L10 4.81 6.53 8.28a.75.75 0 01-1.06-1.06l3.5-3.5A.75.75 0 0110 3zM6.53 11.72a.75.75 0 011.06 0L10 15.19l2.47-2.47a.75.75 0 111.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 010-1.06z" clipRule="evenodd" />
-                </svg>
+              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M10 3a.75.75 0 01.53.22l3.5 3.5a.75.75 0 01-1.06 1.06L10 4.81 6.53 8.28a.75.75 0 01-1.06-1.06l3.5-3.5A.75.75 0 0110 3zM6.53 11.72a.75.75 0 011.06 0L10 15.19l2.47-2.47a.75.75 0 111.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 010-1.06z" clipRule="evenodd" />
+              </svg>
             </span>
           </button>
 
@@ -84,10 +84,10 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, so
               <li onClick={() => { handleFilterChange('color', 'all'); setIsColorOpen(false); }} className="text-gray-900 dark:text-gray-200 relative cursor-default select-none py-2 pl-3 pr-9 hover:bg-brand-pink hover:text-brand-text dark:hover:text-brand-text">Alle Farben</li>
               {COLORS.map(c => (
                 <li key={c} onClick={() => { handleFilterChange('color', c); setIsColorOpen(false); }} className="text-gray-900 dark:text-gray-200 relative cursor-default select-none py-2 pl-3 pr-9 hover:bg-brand-pink hover:text-brand-text dark:hover:text-brand-text">
-                    <div className="flex items-center">
-                        <span style={{ backgroundColor: COLOR_MAP[c] }} className="inline-block h-4 w-4 flex-shrink-0 rounded-full border border-gray-300"></span>
-                        <span className="font-normal ml-3 block truncate">{c}</span>
-                    </div>
+                  <div className="flex items-center">
+                    <span style={{ background: COLOR_MAP[c] }} className="inline-block h-4 w-4 flex-shrink-0 rounded-full border border-gray-300"></span>
+                    <span className="font-normal ml-3 block truncate">{c}</span>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -95,35 +95,35 @@ const FilterControls: React.FC<FilterControlsProps> = ({ filters, setFilters, so
         </div>
         {/* Sorting and Status */}
         <div className="space-y-6">
-            <div>
-                <label htmlFor="sort-by" className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Sortieren nach</label>
-                <div className="relative w-full">
-                    <select
-                        id="sort-by"
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as SortBy)}
-                        className="w-full appearance-none cursor-default rounded-md border border-gray-300 bg-white dark:bg-zinc-700 dark:border-zinc-600 py-2 pl-3 pr-10 text-left shadow-sm focus:border-brand-pink focus:outline-none focus:ring-1 focus:ring-brand-pink sm:text-sm text-gray-900 dark:text-gray-100"
-                    >
-                        <option value={SortBy.Name}>Name</option>
-                        <option value={SortBy.PriceAsc}>Preis: aufsteigend</option>
-                        <option value={SortBy.PriceDesc}>Preis: absteigend</option>
-                        <option value={SortBy.Usage}>Nutzung</option>
-                    </select>
-                    <span className="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
-                        <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M10 3a.75.75 0 01.53.22l3.5 3.5a.75.75 0 01-1.06 1.06L10 4.81 6.53 8.28a.75.75 0 01-1.06-1.06l3.5-3.5A.75.75 0 0110 3zM6.53 11.72a.75.75 0 011.06 0L10 15.19l2.47-2.47a.75.75 0 111.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 010-1.06z" clipRule="evenodd" />
-                        </svg>
-                    </span>
-                </div>
+          <div>
+            <label htmlFor="sort-by" className="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Sortieren nach</label>
+            <div className="relative w-full">
+              <select
+                id="sort-by"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortBy)}
+                className="w-full appearance-none cursor-default rounded-md border border-gray-300 bg-white dark:bg-zinc-700 dark:border-zinc-600 py-2 pl-3 pr-10 text-left shadow-sm focus:border-brand-pink focus:outline-none focus:ring-1 focus:ring-brand-pink sm:text-sm text-gray-900 dark:text-gray-100"
+              >
+                <option value={SortBy.Name}>Name</option>
+                <option value={SortBy.PriceAsc}>Preis: aufsteigend</option>
+                <option value={SortBy.PriceDesc}>Preis: absteigend</option>
+                <option value={SortBy.Usage}>Nutzung</option>
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
+                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 3a.75.75 0 01.53.22l3.5 3.5a.75.75 0 01-1.06 1.06L10 4.81 6.53 8.28a.75.75 0 01-1.06-1.06l3.5-3.5A.75.75 0 0110 3zM6.53 11.72a.75.75 0 011.06 0L10 15.19l2.47-2.47a.75.75 0 111.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 010-1.06z" clipRule="evenodd" />
+                </svg>
+              </span>
             </div>
-            <div>
-                <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Status</h4>
-                <div className="flex flex-wrap gap-2">
-                    <FilterButton label="Alle" active={filters.soldStatus === 'all'} onClick={() => handleFilterChange('soldStatus', 'all')} />
-                    <FilterButton label="Verkauft" active={filters.soldStatus === 'sold'} onClick={() => handleFilterChange('soldStatus', 'sold')} />
-                    <FilterButton label="In Sammlung" active={filters.soldStatus === 'in_collection'} onClick={() => handleFilterChange('soldStatus', 'in_collection')} />
-                </div>
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Status</h4>
+            <div className="flex flex-wrap gap-2">
+              <FilterButton label="Alle" active={filters.soldStatus === 'all'} onClick={() => handleFilterChange('soldStatus', 'all')} />
+              <FilterButton label="Verkauft" active={filters.soldStatus === 'sold'} onClick={() => handleFilterChange('soldStatus', 'sold')} />
+              <FilterButton label="In Sammlung" active={filters.soldStatus === 'in_collection'} onClick={() => handleFilterChange('soldStatus', 'in_collection')} />
             </div>
+          </div>
         </div>
       </div>
     </div>

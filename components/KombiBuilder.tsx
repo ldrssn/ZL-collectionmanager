@@ -3,6 +3,7 @@ import { Item, ItemType, ItemShape } from '../types';
 import { generateUUID } from '../services/utils';
 import { getPlaceholder, COLOR_MAP } from '../constants';
 import { uploadImage } from '../services/itemService';
+import CameraPlaceholder from './CameraPlaceholder';
 
 interface KombiBuilderProps {
     items: Item[];
@@ -18,7 +19,13 @@ const SelectionCard: React.FC<{ item: Item; isSelected: boolean; onClick: () => 
         aria-pressed={isSelected}
         tabIndex={0}
     >
-        <img src={item.photo} alt={item.name} className="w-full aspect-square object-cover" />
+        {item.photo ? (
+            <img src={item.photo} alt={item.name} className="w-full aspect-square object-cover" />
+        ) : (
+            <div className="w-full aspect-square">
+                <CameraPlaceholder />
+            </div>
+        )}
         <p className="text-center p-1 text-xs sm:p-2 sm:text-sm font-semibold truncate bg-white dark:bg-zinc-700 text-gray-800 dark:text-gray-200">{item.name}</p>
     </div>
 );
@@ -32,8 +39,8 @@ const StepIndicator: React.FC<{ currentStep: number; totalSteps: number; }> = ({
             return (
                 <div key={step} className="flex items-center">
                     <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs sm:text-base transition-colors ${isActive ? 'bg-brand-pink text-brand-text' :
-                            isCompleted ? 'bg-green-500 text-white' :
-                                'bg-gray-200 dark:bg-zinc-700 text-gray-500 dark:text-gray-400'
+                        isCompleted ? 'bg-green-500 text-white' :
+                            'bg-gray-200 dark:bg-zinc-700 text-gray-500 dark:text-gray-400'
                         }`}>
                         {isCompleted ? '✓' : step}
                     </div>
@@ -86,7 +93,7 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
 
         const notes = `Kombination aus:\n- ${selectedBody.name} (Körper)\n- ${selectedFlap.name} (Klappe)\n- ${selectedHandle.name} (Henkel)`;
         const combinedColors = [...new Set([...selectedBody.color, ...selectedFlap.color, ...selectedHandle.color])];
-        const finalPhoto = kombinationPhoto || getPlaceholder('Kombi', COLOR_MAP['Grau'], kombinationName.trim());
+        const finalPhoto = kombinationPhoto || '';
 
         const newKombination: Item = {
             id: generateUUID(),
@@ -142,7 +149,13 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
                         <div className="grid grid-cols-3 gap-2 mb-4 p-2 bg-gray-50 dark:bg-zinc-900/50 rounded-lg">
                             {[selectedBody, selectedFlap, selectedHandle].map(item => item && (
                                 <div key={item.id}>
-                                    <img src={item.photo} alt={item.name} className="rounded-lg aspect-square object-cover" />
+                                    {item.photo ? (
+                                        <img src={item.photo} alt={item.name} className="rounded-lg aspect-square object-cover" />
+                                    ) : (
+                                        <div className="rounded-lg aspect-square overflow-hidden">
+                                            <CameraPlaceholder />
+                                        </div>
+                                    )}
                                     <p className="text-xs text-center mt-1 text-gray-600 dark:text-gray-400 truncate">{item.name}</p>
                                 </div>
                             ))}
@@ -163,7 +176,13 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
                                     className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-zinc-600 file:text-brand-pink dark:file:text-brand-pink-dark hover:file:bg-rose-100 dark:hover:file:bg-zinc-500"
                                 />
                                 {uploading && <p className="text-xs text-brand-pink mt-1 animate-pulse">Wird hochgeladen...</p>}
-                                {kombinationPhoto && <img src={kombinationPhoto} alt="Preview" className="mt-2 h-24 w-24 object-cover rounded-md" />}
+                                {kombinationPhoto ? (
+                                    <img src={kombinationPhoto} alt="Preview" className="mt-2 h-24 w-24 object-cover rounded-md" />
+                                ) : (
+                                    <div className="mt-2 h-24 w-24 rounded-md overflow-hidden border border-gray-300 dark:border-zinc-600">
+                                        <CameraPlaceholder />
+                                    </div>
+                                )}
                             </div>
                         </form>
                     </div>
