@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Item, Filters, SortBy, ItemType, ItemShape } from './types';
-import { fetchItemsFromCloud, saveItemToCloud, deleteItemFromCloud, getLocalItems } from './services/itemService';
+import { fetchItemsFromCloud, saveItemToCloud, deleteItemFromCloud, getLocalItems, saveItemsToCloud, deleteAllItemsFromCloud } from './services/itemService';
 import { SAMPLE_ITEMS } from './constants';
 import Header from './components/Header';
 import FilterControls from './components/FilterControls';
@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>('light');
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
   const { user, loading: authLoading } = useAuth();
+  const [isLoadedFromCloud, setIsLoadedFromCloud] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
@@ -78,6 +79,13 @@ const App: React.FC = () => {
       if (user) {
         const cloudItems = await fetchItemsFromCloud(user.id);
         setItems(cloudItems);
+        setIsLoadedFromCloud(true);
+      } else {
+        const localItems = getLocalItems();
+        if (localItems.length > 0) {
+          setItems(localItems);
+        }
+        setIsLoadedFromCloud(false);
       }
     };
     loadItems();
@@ -97,6 +105,13 @@ const App: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Persist items to local storage when user is offline AND items are not from cloud
+  useEffect(() => {
+    if (!user && !isLoadedFromCloud) {
+      localStorage.setItem('ZoeLuCollection', JSON.stringify(items));
+    }
+  }, [items, user, isLoadedFromCloud]);
 
   const handleAddItem = async (item: Item) => {
     if (user) {
@@ -126,6 +141,7 @@ const App: React.FC = () => {
 
   const handleLoadSampleData = () => {
     setItems(SAMPLE_ITEMS);
+    setIsLoadedFromCloud(!!user);
   };
 
   const handleExport = () => {
@@ -159,21 +175,78 @@ const App: React.FC = () => {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const text = e.target?.result;
         if (typeof text === 'string') {
           const importedItems = JSON.parse(text);
           if (Array.isArray(importedItems)) {
-            setItems(importedItems);
-            alert("Sammlung erfolgreich importiert!");
+            if (user) {
+              // User is logged in: Merge Strategy
+              // 1. Fetch existing cloud items
+              const cloudItems = await fetchItemsFromCloud(user.id);
+
+              // 2. Identify duplicates based on content (Name + Type + Shape + Color)
+              const getFingerprint = (item: any) => {
+                const colorStr = Array.isArray(item.color) ? [...item.color].sort().join(',') : item.color;
+                return `${item.name}|${item.type}|${item.shape}|${colorStr}`;
+              };
+              const cloudFingerprints = new Set(cloudItems.map(getFingerprint));
+
+              // 3. Filter imported items
+              const newItemsToSync: Item[] = [];
+              const duplicateItems: Item[] = [];
+
+              importedItems.forEach((item: any) => {
+                if (cloudFingerprints.has(getFingerprint(item))) {
+                  duplicateItems.push(item);
+                } else {
+                  newItemsToSync.push(item);
+                }
+              });
+
+              // 4. Upload only new items
+              if (newItemsToSync.length > 0) {
+                // Regenerate IDs to prevent collisions and RLS conflicts
+                const itemsWithNewIds = newItemsToSync.map((item: any) => ({
+                  ...item,
+                  id: crypto.randomUUID(),
+                  user_id: user.id
+                }));
+                await saveItemsToCloud(user.id, itemsWithNewIds);
+              }
+
+              // Refresh state from cloud
+              const updatedCloudItems = await fetchItemsFromCloud(user.id);
+              setItems(updatedCloudItems);
+              setIsLoadedFromCloud(true);
+
+              // 5. Show summary message
+              if (newItemsToSync.length > 0 && duplicateItems.length > 0) {
+                alert(`Import erfolgreich! ${newItemsToSync.length} neue Teile importiert. ${duplicateItems.length} Duplikate wurden übersprungen.`);
+              } else if (newItemsToSync.length > 0) {
+                alert(`Import erfolgreich! ${newItemsToSync.length} Teile wurden importiert.`);
+              } else {
+                alert("Alle Teile aus der Datei sind bereits in Ihrer Sammlung vorhanden.");
+              }
+
+            } else {
+              // User is offline: Just update local view (regenerate IDs here too for consistency)
+              const itemsWithNewIds = importedItems.map((item: any) => ({
+                ...item,
+                id: crypto.randomUUID()
+              }));
+              setItems(itemsWithNewIds);
+              setIsLoadedFromCloud(false);
+              alert("Sammlung erfolgreich importiert!");
+            }
           } else {
             throw new Error("Die Datei hat nicht das erwartete Format (ein Array von Artikeln).");
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Fehler beim Importieren der Datei:", error);
-        alert("Fehler beim Importieren der Datei. Bitte stellen Sie sicher, dass es sich um eine gültige Sammlungsdatei handelt.");
+        alert(`Fehler beim Importieren der Datei: ${error.message || error}`);
       }
     };
     reader.readAsText(file);
@@ -567,6 +640,14 @@ const App: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+        accept=".json"
+      />
     </div>
   );
 };

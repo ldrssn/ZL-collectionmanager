@@ -61,6 +61,36 @@ export const saveItemToCloud = async (userId: string, item: Item): Promise<void>
   }
 };
 
+// Batch save items to Supabase
+export const saveItemsToCloud = async (userId: string, items: Item[]): Promise<void> => {
+  try {
+    const itemsToUpsert = items.map(item => ({
+      id: item.id,
+      user_id: userId,
+      name: item.name,
+      photo: item.photo,
+      type: item.type,
+      shape: item.shape,
+      color: item.color,
+      price: item.price,
+      purchase_price: item.purchasePrice || null,
+      usage_count: item.usageCount,
+      is_sold: item.isSold,
+      selling_price: item.sellingPrice || null,
+      notes: item.notes || null
+    }));
+
+    const { error } = await supabase
+      .from('items')
+      .insert(itemsToUpsert);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error batch saving items to Supabase:", error);
+    throw error;
+  }
+};
+
 // Delete an item from Supabase
 export const deleteItemFromCloud = async (userId: string, itemId: string): Promise<void> => {
   try {
@@ -73,6 +103,21 @@ export const deleteItemFromCloud = async (userId: string, itemId: string): Promi
     if (error) throw error;
   } catch (error) {
     console.error("Error deleting item from Supabase:", error);
+  }
+};
+
+// Delete all items for a user from Supabase
+export const deleteAllItemsFromCloud = async (userId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('items')
+      .delete()
+      .eq('user_id', userId);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error deleting all items from Supabase:", error);
+    throw error;
   }
 };
 

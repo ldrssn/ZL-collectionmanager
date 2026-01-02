@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { Item } from '../types';
+import { saveItemsToCloud, fetchItemsFromCloud } from '../services/itemService';
 
 interface MigrationAssistantProps {
     userId: string;
@@ -11,6 +12,7 @@ export const MigrationAssistant: React.FC<MigrationAssistantProps> = ({ userId, 
     const [localData, setLocalData] = useState<Item[] | null>(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null);
+    const [isMigrated, setIsMigrated] = useState(false);
 
     useEffect(() => {
         const data = localStorage.getItem('ZoeLuCollection');
@@ -32,34 +34,57 @@ export const MigrationAssistant: React.FC<MigrationAssistantProps> = ({ userId, 
         setMessage(null);
 
         try {
-            // Map local items to database columns
-            const itemsToInsert = localData.map(item => ({
-                id: item.id,
-                user_id: userId,
-                name: item.name,
-                photo: item.photo,
-                type: item.type,
-                shape: item.shape,
-                color: item.color,
-                price: item.price,
-                purchase_price: item.purchasePrice || null,
-                usage_count: item.usageCount,
-                is_sold: item.isSold,
-                selling_price: item.sellingPrice || null,
-                notes: item.notes || null
-            }));
+            // 1. Fetch existing cloud items
+            const cloudItems = await fetchItemsFromCloud(userId);
 
-            const { error: insertError } = await supabase
-                .from('items')
-                .upsert(itemsToInsert);
+            // 2. Identify duplicates based on content (Name + Type + Shape + Color)
+            // Helper to generate a unique fingerprint for an item
+            const getFingerprint = (item: Item) => {
+                const colorStr = Array.isArray(item.color) ? [...item.color].sort().join(',') : item.color;
+                return `${item.name}|${item.type}|${item.shape}|${colorStr}`;
+            };
 
-            if (insertError) throw insertError;
+            const cloudFingerprints = new Set(cloudItems.map(getFingerprint));
 
-            // Clear local storage after successful migration
-            localStorage.removeItem('ZoeLuCollection');
-            setLocalData(null);
+            // 3. Filter local items
+            const newItemsToSync: Item[] = [];
+            const duplicateItems: Item[] = [];
+
+            localData.forEach(item => {
+                if (cloudFingerprints.has(getFingerprint(item))) {
+                    duplicateItems.push(item);
+                } else {
+                    newItemsToSync.push(item);
+                }
+            });
+
+            // 4. Upload only new items
+            if (newItemsToSync.length > 0) {
+                // Regenerate IDs for new items to prevent collision
+                const itemsToUpload = newItemsToSync.map(item => ({
+                    ...item,
+                    id: crypto.randomUUID(), // New unique ID
+                    user_id: userId
+                }));
+                await saveItemsToCloud(userId, itemsToUpload);
+            }
+
+            // Clear local storage after successful migration check
+            // localStorage.removeItem('ZoeLuCollection'); REMOVED AUTO CLEANUP
+            // setLocalData(null);
+
+            setIsMigrated(true);
             onMigrationComplete();
-            setMessage({ type: 'success', text: 'Migration erfolgreich! Ihre Sammlung ist nun in der Cloud gesichert.' });
+
+            // 5. Show specific success/info message
+            if (newItemsToSync.length > 0 && duplicateItems.length > 0) {
+                setMessage({ type: 'success', text: `Migration erfolgreich! ${newItemsToSync.length} Teile wurden synchronisiert. ${duplicateItems.length} Teile waren bereits in der Cloud und wurden übersprungen.` });
+            } else if (newItemsToSync.length > 0) {
+                setMessage({ type: 'success', text: `Migration erfolgreich! ${newItemsToSync.length} Teile wurden in die Cloud gesichert.` });
+            } else {
+                setMessage({ type: 'success', text: 'Alle Teile sind bereits in der Cloud vorhanden. Keine neuen Daten zu synchronisieren.' });
+            }
+
         } catch (e: any) {
             console.error('Migration failed', e);
             setMessage({ type: 'error', text: e.message || 'Bei der Migration ist ein Fehler aufgetreten.' });
@@ -75,15 +100,27 @@ export const MigrationAssistant: React.FC<MigrationAssistantProps> = ({ userId, 
         }
     };
 
+    const handleCleanup = () => {
+        if (window.confirm('Möchten Sie die lokalen Daten nun wirklich löschen? Ihre Daten sind bereits sicher in der Cloud.')) {
+            localStorage.removeItem('ZoeLuCollection');
+            setLocalData(null);
+            setIsMigrated(false);
+            setMessage(null);
+        }
+    };
+
     if (!localData && !message) return null;
 
     const migrationTitle = 'Migrations-Assistent';
-    const migrationPrompt = localData
-        ? `Wir haben <strong>${localData.length} Teile</strong> in Ihrem lokalen Browser-Speicher gefunden. Möchten Sie diese mit Ihrem Cloud-Konto synchronisieren?`
-        : 'Migration abgeschlossen.';
+    const migrationPrompt = isMigrated
+        ? 'Synchronisation abgeschlossen. Sie können die lokalen Daten nun bereinigen.'
+        : (localData
+            ? `Wir haben <strong>${localData.length} Teile</strong> in Ihrem lokalen Browser-Speicher gefunden. Möchten Sie diese mit Ihrem Cloud-Konto synchronisieren?`
+            : 'Migration abgeschlossen.');
     const migratingText = 'Synchronisiere...';
     const migrateButton = 'In die Cloud laden';
     const dismissButton = 'Verwerfen';
+    const cleanupButton = 'Lokale Daten löschen';
 
     return (
         <div className="w-full mb-6 animate-in fade-in slide-in-from-top duration-500">
@@ -105,14 +142,14 @@ export const MigrationAssistant: React.FC<MigrationAssistantProps> = ({ userId, 
 
                             {message && (
                                 <div className={`mt-4 p-3 rounded-md text-sm ${message.type === 'error'
-                                        ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800'
-                                        : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800'
+                                    ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800'
+                                    : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800'
                                     }`}>
                                     {message.text}
                                 </div>
                             )}
 
-                            {localData && (
+                            {localData && !isMigrated && (
                                 <div className="mt-6 flex flex-wrap items-center gap-3">
                                     <button
                                         onClick={handleMigration}
@@ -142,6 +179,20 @@ export const MigrationAssistant: React.FC<MigrationAssistantProps> = ({ userId, 
                                         className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-zinc-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark transition-all disabled:opacity-50"
                                     >
                                         {dismissButton}
+                                    </button>
+                                </div>
+                            )}
+
+                            {isMigrated && (
+                                <div className="mt-6 flex flex-wrap items-center gap-3">
+                                    <button
+                                        onClick={handleCleanup}
+                                        className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-zinc-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark transition-all"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        {cleanupButton}
                                     </button>
                                 </div>
                             )}

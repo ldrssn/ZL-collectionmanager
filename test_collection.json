@@ -1,0 +1,15 @@
+[
+    {
+        "id": "test-item-1",
+        "name": "Test Klappe",
+        "photo": "https://zoelu.com/cdn/shop/files/webseite-zoe-lu-logo-schwarz_220x.png",
+        "type": "Klappe",
+        "shape": "Square",
+        "color": [
+            "Schwarz"
+        ],
+        "price": 50,
+        "usageCount": 0,
+        "isSold": false
+    }
+]
