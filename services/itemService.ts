@@ -1,47 +1,116 @@
-
 import { Item } from '../types';
+import { supabase } from './supabase';
 
-const OLD_STORAGE_KEY = 'zoueLuCollection';
 const STORAGE_KEY = 'ZoeLuCollection';
 
-// One-time migration function to move data from the old key to the new one.
-const migrateData = () => {
+// Fetch items from Supabase for a specific user
+export const fetchItemsFromCloud = async (userId: string): Promise<Item[]> => {
   try {
-    const oldData = localStorage.getItem(OLD_STORAGE_KEY);
-    // Only migrate if there's old data and no new data yet.
-    if (oldData && !localStorage.getItem(STORAGE_KEY)) {
-      localStorage.setItem(STORAGE_KEY, oldData);
-      localStorage.removeItem(OLD_STORAGE_KEY);
-      console.log('Successfully migrated data to new storage key.');
-    }
-  } catch (error) {
-    console.error('Failed to migrate data from old storage key:', error);
-  }
-};
+    const { data, error } = await supabase
+      .from('items')
+      .select('*')
+      .eq('user_id', userId)
+      .order('name', { ascending: true });
 
-// Run migration check when the service is loaded.
-migrateData();
+    if (error) throw error;
 
-export const getItems = (): Item[] => {
-  try {
-    const itemsJson = localStorage.getItem(STORAGE_KEY);
-    if (itemsJson) {
-      return JSON.parse(itemsJson);
-    } else {
-      // Return an empty array instead of sample data to prevent overwrites.
-      return [];
-    }
+    return (data || []).map(row => ({
+      id: row.id,
+      name: row.name,
+      photo: row.photo,
+      type: row.type as any,
+      shape: row.shape as any,
+      color: row.color,
+      price: Number(row.price),
+      purchasePrice: row.purchase_price ? Number(row.purchase_price) : undefined,
+      usageCount: row.usage_count,
+      isSold: row.is_sold,
+      sellingPrice: row.selling_price ? Number(row.selling_price) : undefined,
+      notes: row.notes || undefined
+    }));
   } catch (error) {
-    console.error("Could not retrieve items from localStorage", error);
-    // Return an empty array on error as a safe fallback.
+    console.error("Error fetching items from Supabase:", error);
     return [];
   }
 };
 
-export const saveItems = (items: Item[]): void => {
+// Save or Update an item in Supabase
+export const saveItemToCloud = async (userId: string, item: Item): Promise<void> => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    const { error } = await supabase
+      .from('items')
+      .upsert({
+        id: item.id,
+        user_id: userId,
+        name: item.name,
+        photo: item.photo,
+        type: item.type,
+        shape: item.shape,
+        color: item.color,
+        price: item.price,
+        purchase_price: item.purchasePrice || null,
+        usage_count: item.usageCount,
+        is_sold: item.isSold,
+        selling_price: item.sellingPrice || null,
+        notes: item.notes || null
+      });
+
+    if (error) throw error;
   } catch (error) {
-    console.error("Could not save items to localStorage", error);
+    console.error("Error saving item to Supabase:", error);
   }
+};
+
+// Delete an item from Supabase
+export const deleteItemFromCloud = async (userId: string, itemId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('items')
+      .delete()
+      .eq('id', itemId)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error deleting item from Supabase:", error);
+  }
+};
+
+// Upload an image to Supabase Storage
+export const uploadImage = async (file: File): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `item-images/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('collection-images')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('collection-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    return null;
+  }
+};
+
+// Legacy local storage functions (used for migration)
+export const getLocalItems = (): Item[] => {
+  try {
+    const itemsJson = localStorage.getItem(STORAGE_KEY);
+    return itemsJson ? JSON.parse(itemsJson) : [];
+  } catch (error) {
+    console.error("Could not retrieve items from localStorage", error);
+    return [];
+  }
+};
+
+export const clearLocalItems = (): void => {
+  localStorage.removeItem(STORAGE_KEY);
 };

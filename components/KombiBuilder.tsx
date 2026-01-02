@@ -2,11 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { Item, ItemType, ItemShape } from '../types';
 import { generateUUID } from '../services/utils';
 import { getPlaceholder, COLOR_MAP } from '../constants';
+import { uploadImage } from '../services/itemService';
 
 interface KombiBuilderProps {
-  items: Item[];
-  onAddKombination: (item: Item) => void;
-  onClose: () => void;
+    items: Item[];
+    onAddKombination: (item: Item) => void;
+    onClose: () => void;
 }
 
 const SelectionCard: React.FC<{ item: Item; isSelected: boolean; onClick: () => void }> = ({ item, isSelected, onClick }) => (
@@ -30,11 +31,10 @@ const StepIndicator: React.FC<{ currentStep: number; totalSteps: number; }> = ({
             const isCompleted = step < currentStep;
             return (
                 <div key={step} className="flex items-center">
-                    <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs sm:text-base transition-colors ${
-                        isActive ? 'bg-brand-pink text-brand-text' : 
-                        isCompleted ? 'bg-green-500 text-white' : 
-                        'bg-gray-200 dark:bg-zinc-700 text-gray-500 dark:text-gray-400'
-                    }`}>
+                    <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs sm:text-base transition-colors ${isActive ? 'bg-brand-pink text-brand-text' :
+                            isCompleted ? 'bg-green-500 text-white' :
+                                'bg-gray-200 dark:bg-zinc-700 text-gray-500 dark:text-gray-400'
+                        }`}>
                         {isCompleted ? '✓' : step}
                     </div>
                     {step < totalSteps && <div className="w-4 sm:w-8 h-px bg-gray-200 dark:bg-zinc-600 mx-1 sm:mx-2"></div>}
@@ -51,6 +51,7 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
     const [selectedHandle, setSelectedHandle] = useState<Item | null>(null);
     const [kombinationName, setKombinationName] = useState('');
     const [kombinationPhoto, setKombinationPhoto] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
 
     const availableBodies = useMemo(() => items.filter(i => i.type === ItemType.Körper && !i.isSold), [items]);
     const availableFlaps = useMemo(() => {
@@ -61,12 +62,17 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
 
     const handleNext = () => setCurrentStep(prev => prev + 1);
     const handleBack = () => setCurrentStep(prev => prev - 1);
-    
-    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onloadend = () => setKombinationPhoto(reader.result as string);
-            reader.readAsDataURL(e.target.files[0]);
+            setUploading(true);
+            const url = await uploadImage(e.target.files[0]);
+            if (url) {
+                setKombinationPhoto(url);
+            } else {
+                alert('Fehler beim Hochladen des Bildes.');
+            }
+            setUploading(false);
         }
     };
 
@@ -148,7 +154,15 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
                             </div>
                             <div>
                                 <label htmlFor="kombi-photo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto (optional)</label>
-                                <input type="file" id="kombi-photo" onChange={handlePhotoChange} accept="image/*" className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-zinc-600 file:text-brand-pink dark:file:text-brand-pink-dark hover:file:bg-rose-100 dark:hover:file:bg-zinc-500" />
+                                <input
+                                    type="file"
+                                    id="kombi-photo"
+                                    onChange={handlePhotoChange}
+                                    accept="image/*"
+                                    disabled={uploading}
+                                    className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-zinc-600 file:text-brand-pink dark:file:text-brand-pink-dark hover:file:bg-rose-100 dark:hover:file:bg-zinc-500"
+                                />
+                                {uploading && <p className="text-xs text-brand-pink mt-1 animate-pulse">Wird hochgeladen...</p>}
                                 {kombinationPhoto && <img src={kombinationPhoto} alt="Preview" className="mt-2 h-24 w-24 object-cover rounded-md" />}
                             </div>
                         </form>
@@ -157,7 +171,7 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
             default: return null;
         }
     };
-    
+
     const isNextDisabled = () => {
         if (currentStep === 1 && !selectedBody) return true;
         if (currentStep === 2 && !selectedFlap) return true;
@@ -168,7 +182,7 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
     return (
         <div className="flex flex-col h-full">
             <div className="flex-shrink-0 pt-4">
-                 <StepIndicator currentStep={currentStep} totalSteps={4} />
+                <StepIndicator currentStep={currentStep} totalSteps={4} />
             </div>
             <div className="flex-grow overflow-y-auto py-4">
                 {renderStepContent()}
@@ -194,8 +208,9 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
                 ) : (
                     <button
                         type="submit"
+                        disabled={uploading}
                         onClick={handleSave}
-                        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
                     >
                         Kombination speichern
                     </button>
