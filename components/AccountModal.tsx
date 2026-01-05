@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { updateUserEmail, updateUserPassword } from '../services/authService';
+import MaterialIcon from './MaterialIcon';
 
 interface AccountModalProps {
     isOpen: boolean;
@@ -35,13 +36,9 @@ const AccountModal: React.FC<AccountModalProps> = ({
     const RequirementItem: React.FC<{ met: boolean, text: string }> = ({ met, text }) => (
         <div className="flex items-center space-x-2 text-xs">
             {met ? (
-                <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
+                <MaterialIcon name="check" className="h-4 w-4 text-green-500" />
             ) : (
-                <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <MaterialIcon name="close" className="h-4 w-4 text-red-500" />
             )}
             <span className={met ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>{text}</span>
         </div>
@@ -91,7 +88,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
         <div className="fixed inset-0 z-50 flex justify-center items-center lg:p-4">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={onClose}></div>
 
-            <div className="bg-white dark:bg-zinc-800 w-full h-full lg:h-auto lg:rounded-lg lg:shadow-xl lg:max-w-lg relative z-10 flex flex-col pointer-events-auto">
+            <div className="bg-white dark:bg-zinc-800 w-full h-full lg:h-auto lg:rounded-lg lg:shadow-xl lg:max-w-[600px] lg:w-full relative z-10 flex flex-col pointer-events-auto">
                 <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-gray-100 dark:border-zinc-700">
                     <div className="text-left w-full">
                         <h3 className="text-xl leading-6 font-bold text-gray-900 dark:text-gray-100" id="modal-title">
@@ -105,9 +102,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
                         className="bg-white dark:bg-zinc-800 rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink ml-4"
                     >
                         <span className="sr-only">Schließen</span>
-                        <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <MaterialIcon name="close" className="h-6 w-6" />
                     </button>
                 </div>
 
@@ -218,9 +213,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
                                                 onClick={onExport}
                                                 className="inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink dark:bg-zinc-700 dark:text-gray-200 dark:border-zinc-600 dark:hover:bg-zinc-600"
                                             >
-                                                <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                </svg>
+                                                <MaterialIcon name="file_download" className="-ml-1 mr-2 text-xl text-gray-500" />
                                                 Exportieren
                                             </button>
                                             <button
@@ -228,9 +221,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
                                                 onClick={onImportClick}
                                                 className="inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink dark:bg-zinc-700 dark:text-gray-200 dark:border-zinc-600 dark:hover:bg-zinc-600"
                                             >
-                                                <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                                </svg>
+                                                <MaterialIcon name="file_upload" className="-ml-1 mr-2 text-xl text-gray-500" />
                                                 Importieren
                                             </button>
                                         </div>
@@ -249,9 +240,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
                             onClose();
                         }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
+                        <MaterialIcon name="logout" className="-ml-1 mr-2 text-xl" />
                         Abmelden
                     </button>
                 </div>

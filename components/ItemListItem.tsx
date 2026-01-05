@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Item, ItemType } from '../types';
 import { COLOR_MAP } from '../constants';
 import CameraPlaceholder from './CameraPlaceholder';
+import MaterialIcon from './MaterialIcon';
 
 interface ItemListItemProps {
   item: Item;
@@ -35,7 +36,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onEdit, onUpdate }) =
           <img src={item.photo} alt={item.name} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md flex-shrink-0" />
         ) : (
           <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-md overflow-hidden">
-            <CameraPlaceholder />
+            <CameraPlaceholder iconSize={48} />
           </div>
         )}
         <div className="flex-grow ml-3 sm:ml-4">
@@ -45,17 +46,13 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onEdit, onUpdate }) =
               {item.isSold && <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-900/50 dark:text-red-400 px-2 py-0.5 rounded-full">VERKAUFT</span>}
             </div>
             <div className="hidden sm:flex items-center space-x-1.5 text-sm bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-brand-pink" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-              </svg>
+              <MaterialIcon name="favorite" className="text-brand-pink text-base" fill={true} />
               <span>{item.usageCount}</span>
             </div>
           </div>
         </div>
-        <div className="ml-4 flex-shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-gray-400 dark:text-gray-500 transition-transform duration-300 ${isExpanded ? 'transform rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
+        <div className="ml-4 flex-shrink-0 flex items-center justify-center">
+          <MaterialIcon name="expand_more" className={`text-gray-400 dark:text-gray-500 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
         </div>
       </div>
 
@@ -96,11 +93,9 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onEdit, onUpdate }) =
             )}
           </div>
           <div className="pt-4 mt-3 border-t border-gray-200 dark:border-zinc-700 flex items-center justify-between gap-2">
-            <button onClick={() => onEdit(item)} className="flex-grow px-3 py-2 bg-gray-200 dark:bg-zinc-600 text-gray-800 dark:text-gray-200 text-xs font-semibold rounded-md hover:bg-gray-300 dark:hover:bg-zinc-500 transition-colors">Bearbeiten</button>
-            <button onClick={handleIncrementUsage} className="flex-shrink-0 p-2 bg-brand-pink text-brand-text rounded-md hover:bg-brand-pink-dark transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-              </svg>
+            <button onClick={() => onEdit(item)} className="flex-grow h-10 px-3 bg-gray-200 dark:bg-zinc-600 text-gray-800 dark:text-gray-200 text-xs font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-500 transition-colors">Bearbeiten</button>
+            <button onClick={handleIncrementUsage} className="flex-shrink-0 w-10 h-10 bg-brand-pink text-brand-text rounded-lg hover:bg-brand-pink-dark transition-colors flex items-center justify-center">
+              <MaterialIcon name="favorite" className="text-xl" fill={true} />
             </button>
           </div>
         </div>

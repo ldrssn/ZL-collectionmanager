@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Item, ItemType } from '../types';
 import { COLOR_MAP } from '../constants';
 import CameraPlaceholder from './CameraPlaceholder';
+import MaterialIcon from './MaterialIcon';
 
 interface ItemCardProps {
   item: Item;
@@ -90,9 +91,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onUpdate, activeColor
               <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">VERKAUFT</div>
             )}
             <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-10">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-              </svg>
+              <MaterialIcon name="favorite" className="text-base text-brand-pink" fill={true} />
               <span>{item.usageCount}</span>
             </div>
             <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/60 to-transparent">
@@ -142,11 +141,9 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onUpdate, activeColor
           </div>
 
           <div className="flex-shrink-0 pt-3 mt-auto border-t border-zinc-600 flex items-center justify-between gap-2">
-            <button onClick={() => onEdit(item)} className="flex-grow px-3 py-2 bg-gray-200 dark:bg-zinc-600 text-gray-800 dark:text-gray-200 text-xs font-semibold rounded-md hover:bg-gray-300 dark:hover:bg-zinc-500 transition-colors">Bearbeiten</button>
-            <button onClick={handleIncrementUsage} className="flex-shrink-0 p-2 bg-brand-pink text-brand-text rounded-md hover:bg-brand-pink-dark transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-              </svg>
+            <button onClick={() => onEdit(item)} className="flex-grow h-10 px-3 bg-gray-200 dark:bg-zinc-600 text-gray-800 dark:text-gray-200 text-xs font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-500 transition-colors">Bearbeiten</button>
+            <button onClick={handleIncrementUsage} className="flex-shrink-0 w-10 h-10 bg-brand-pink text-brand-text rounded-lg hover:bg-brand-pink-dark transition-colors flex items-center justify-center">
+              <MaterialIcon name="favorite" className="text-xl" fill={true} />
             </button>
           </div>
         </div>

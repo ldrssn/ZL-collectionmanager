@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
+import MaterialIcon from './MaterialIcon';
 
 export const Auth: React.FC = () => {
     const [loading, setLoading] = useState(false);
@@ -53,13 +54,9 @@ export const Auth: React.FC = () => {
     const RequirementItem: React.FC<{ met: boolean, text: string }> = ({ met, text }) => (
         <div className="flex items-center space-x-2 text-xs">
             {met ? (
-                <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
+                <MaterialIcon name="check" className="h-4 w-4 text-green-500" />
             ) : (
-                <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <MaterialIcon name="close" className="h-4 w-4 text-red-500" />
             )}
             <span className={met ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>{text}</span>
         </div>
@@ -70,9 +67,7 @@ export const Auth: React.FC = () => {
             <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-md w-full space-y-8 p-8 bg-white dark:bg-zinc-800 rounded-lg shadow-md text-center">
                     <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-16 w-16 text-brand-pink animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
+                        <MaterialIcon name="mail" className="mx-auto h-16 w-16 text-brand-pink animate-pulse" />
                         <h2 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                             E-Mail bestätigen
                         </h2>
@@ -105,9 +100,7 @@ export const Auth: React.FC = () => {
         <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8 p-8 bg-white dark:bg-zinc-800 rounded-lg shadow-md text-center">
                 <div>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
+                    <MaterialIcon name="account_circle" className="mx-auto text-brand-pink" size={92} />
                     <h2 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                         Willkommen beim Collection Manager
                     </h2>
@@ -186,7 +179,7 @@ export const Auth: React.FC = () => {
                         <button
                             type="submit"
                             disabled={loading || (isSignUp && !isPasswordValid)}
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (
                                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-brand-text" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

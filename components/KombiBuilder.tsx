@@ -4,6 +4,7 @@ import { generateUUID } from '../services/utils';
 import { getPlaceholder, COLOR_MAP } from '../constants';
 import { uploadImage } from '../services/itemService';
 import CameraPlaceholder from './CameraPlaceholder';
+import MaterialIcon from './MaterialIcon';
 
 interface KombiBuilderProps {
     items: Item[];
@@ -42,7 +43,7 @@ const StepIndicator: React.FC<{ currentStep: number; totalSteps: number; }> = ({
                         isCompleted ? 'bg-green-500 text-white' :
                             'bg-gray-200 dark:bg-zinc-700 text-gray-500 dark:text-gray-400'
                         }`}>
-                        {isCompleted ? '✓' : step}
+                        {isCompleted ? <MaterialIcon name="check" className="text-sm sm:text-lg" /> : step}
                     </div>
                     {step < totalSteps && <div className="w-4 sm:w-8 h-px bg-gray-200 dark:bg-zinc-600 mx-1 sm:mx-2"></div>}
                 </div>

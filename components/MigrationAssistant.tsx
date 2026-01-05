@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
+import MaterialIcon from './MaterialIcon';
 import { Item } from '../types';
 import { saveItemsToCloud, fetchItemsFromCloud } from '../services/itemService';
 
@@ -128,10 +129,8 @@ export const MigrationAssistant: React.FC<MigrationAssistantProps> = ({ userId, 
                 <div className="p-4 sm:p-6">
                     <div className="flex items-start space-x-4">
                         <div className="flex-shrink-0">
-                            <div className="bg-rose-50 dark:bg-zinc-700 p-3 rounded-full">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-brand-pink" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
+                            <div className="bg-rose-50 dark:bg-zinc-700 p-3 rounded-full flex items-center justify-center">
+                                <MaterialIcon name="cloud_upload" className="h-6 w-6 text-brand-pink" />
                             </div>
                         </div>
                         <div className="flex-grow">
@@ -166,9 +165,7 @@ export const MigrationAssistant: React.FC<MigrationAssistantProps> = ({ userId, 
                                             </>
                                         ) : (
                                             <>
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                </svg>
+                                                <MaterialIcon name="sync_problem" className="-ml-1 mr-2 text-base" />
                                                 {migrateButton}
                                             </>
                                         )}
@@ -189,9 +186,7 @@ export const MigrationAssistant: React.FC<MigrationAssistantProps> = ({ userId, 
                                         onClick={handleCleanup}
                                         className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-zinc-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink-dark transition-all"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
+                                        <MaterialIcon name="delete_sweep" className="-ml-1 mr-2 text-base text-gray-500" />
                                         {cleanupButton}
                                     </button>
                                 </div>
@@ -202,9 +197,7 @@ export const MigrationAssistant: React.FC<MigrationAssistantProps> = ({ userId, 
                                 onClick={handleDismiss}
                                 className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
                             >
-                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
+                                <MaterialIcon name="close" className="h-5 w-5" />
                             </button>
                         )}
                     </div>
