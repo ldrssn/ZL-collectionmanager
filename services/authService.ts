@@ -11,6 +11,9 @@ export const useAuth = () => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null);
             setLoading(false);
+        }).catch(err => {
+            console.error('Error fetching session:', err);
+            setLoading(false);
         });
 
         // Listen for changes on auth state (sign in, sign out, etc.)
