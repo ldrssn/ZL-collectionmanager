@@ -1,0 +1,11 @@
+<svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="400" cy="400" r="400" fill="#E6C5C5"/>
+  <g transform="translate(200, 150)">
+    <path d="M200,100 Q150,50 100,100 Q50,150 100,200 L200,300 L300,200 Q350,150 300,100 Q250,50 200,100 Z" 
+          fill="white" stroke="white" stroke-width="40" stroke-linejoin="round"/>
+    <path d="M50,250 Q50,200 100,200 L300,200 Q350,200 350,250 L350,450 Q350,500 300,500 L100,500 Q50,500 50,450 Z" 
+          fill="white" stroke="white" stroke-width="40" stroke-linejoin="round"/>
+    <path d="M150,200 L150,100 Q150,50 200,50 Q250,50 250,100 L250,200" 
+          fill="none" stroke="white" stroke-width="40" stroke-linecap="round"/>
+  </g>
+</svg>

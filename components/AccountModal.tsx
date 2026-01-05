@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { updateUserEmail, updateUserPassword } from '../services/authService';
+import React, { useState, useEffect } from 'react';
+import { updateUserEmail, updateUserPassword, updateCollectionName } from '../services/authService';
 import MaterialIcon from './MaterialIcon';
 
 interface AccountModalProps {
@@ -9,6 +9,8 @@ interface AccountModalProps {
     onLogout: () => void;
     onExport: () => void;
     onImportClick: () => void;
+    collectionName?: string;
+    onCollectionNameUpdate: (name: string) => void;
 }
 
 const AccountModal: React.FC<AccountModalProps> = ({
@@ -18,8 +20,11 @@ const AccountModal: React.FC<AccountModalProps> = ({
     onLogout,
     onExport,
     onImportClick,
+    collectionName,
+    onCollectionNameUpdate,
 }) => {
     const [activeTab, setActiveTab] = useState<'profile' | 'data'>('profile');
+    const [newCollectionName, setNewCollectionName] = useState(collectionName || '');
     const [newEmail, setNewEmail] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -33,6 +38,11 @@ const AccountModal: React.FC<AccountModalProps> = ({
     const passwordsMatch = newPassword === confirmPassword && newPassword !== '';
     const isPasswordValid = hasMinLength && hasUpperCase && hasNumber && passwordsMatch;
 
+    // Sync newCollectionName with collectionName prop when it changes
+    useEffect(() => {
+        setNewCollectionName(collectionName || '');
+    }, [collectionName]);
+
     const RequirementItem: React.FC<{ met: boolean, text: string }> = ({ met, text }) => (
         <div className="flex items-center space-x-2 text-xs">
             {met ? (
@@ -45,6 +55,24 @@ const AccountModal: React.FC<AccountModalProps> = ({
     );
 
     if (!isOpen) return null;
+
+    const handleUpdateCollectionName = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage(null);
+        try {
+            const nameToSave = newCollectionName.trim() || 'My ZoéLu Collection';
+            const { error } = await updateCollectionName(nameToSave);
+            if (error) throw error;
+            onCollectionNameUpdate(nameToSave);
+            setNewCollectionName(nameToSave);
+            setMessage({ type: 'success', text: 'Sammlungsname erfolgreich aktualisiert!' });
+        } catch (err: any) {
+            setMessage({ type: 'error', text: err.message || 'Fehler beim Aktualisieren des Namens.' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleUpdateEmail = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -143,6 +171,27 @@ const AccountModal: React.FC<AccountModalProps> = ({
                                 {activeTab === 'profile' && (
                                     <div className="space-y-6">
                                         <div>
+                                            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-3">Sammlungsname</h4>
+                                            <form onSubmit={handleUpdateCollectionName} className="space-y-3">
+                                                <input
+                                                    type="text"
+                                                    placeholder="z.B. Meine Zoé Lu Schätze"
+                                                    className="block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-brand-pink focus:ring-brand-pink dark:bg-zinc-700 dark:text-white sm:text-sm p-2 bg-gray-50"
+                                                    value={newCollectionName}
+                                                    onChange={(e) => setNewCollectionName(e.target.value)}
+                                                    required
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    disabled={loading || newCollectionName === collectionName}
+                                                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-gray-900 bg-brand-pink hover:bg-brand-pink-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-pink disabled:opacity-50 transition-colors w-full sm:w-auto"
+                                                >
+                                                    {loading ? 'Speichern...' : 'Name speichern'}
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        <div className="border-t border-gray-100 dark:border-zinc-700 pt-6">
                                             <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 uppercase tracking-wider mb-3">Email ändern</h4>
                                             <form onSubmit={handleUpdateEmail} className="space-y-3">
                                                 <input

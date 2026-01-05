@@ -102,7 +102,9 @@ export const Auth: React.FC = () => {
                 <div>
                     <MaterialIcon name="account_circle" className="mx-auto text-brand-pink" size={92} />
                     <h2 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                        Willkommen beim Collection Manager
+                        Willkommen beim
+                        <br />
+                        ZoéLu Collection Manager
                     </h2>
                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                         {isSignUp

@@ -16,6 +16,7 @@ import { supabase } from './services/supabase';
 import { MigrationAssistant } from './components/MigrationAssistant';
 import AccountModal from './components/AccountModal';
 import MaterialIcon from './components/MaterialIcon';
+import ScrollToTop from './components/ScrollToTop';
 
 type Theme = 'light' | 'dark';
 
@@ -41,6 +42,15 @@ const App: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const [isLoadedFromCloud, setIsLoadedFromCloud] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [collectionName, setCollectionName] = useState('My ZoéLu Collection');
+
+  useEffect(() => {
+    if (user?.user_metadata?.collection_name) {
+      setCollectionName(user.user_metadata.collection_name);
+    } else {
+      setCollectionName('My ZoéLu Collection');
+    }
+  }, [user]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
@@ -308,7 +318,7 @@ const App: React.FC = () => {
       if (filters.soldStatus === 'sold' && !item.isSold) return false;
       if (filters.soldStatus === 'in_collection' && item.isSold) return false;
       if (filters.type !== 'all' && item.type !== filters.type) return false;
-      if (filters.shape !== 'all' && ![ItemType.Henkel, ItemType.Accessoire].includes(item.type) && item.shape !== filters.shape) return false;
+      if (filters.shape !== 'all' && (![ItemType.Körper, ItemType.Klappe].includes(item.type) || item.shape !== filters.shape)) return false;
       if (filters.color !== 'all' && !item.color.includes(filters.color)) return false;
       return true;
     });
@@ -348,7 +358,13 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-gray-50 dark:bg-zinc-900 min-h-screen flex flex-col">
-      <Header theme={theme} onThemeToggle={toggleTheme} onOpenAccount={() => setIsAccountModalOpen(true)} showLogout={!!user} />
+      <Header
+        theme={theme}
+        onThemeToggle={toggleTheme}
+        onOpenAccount={() => setIsAccountModalOpen(true)}
+        showLogout={!!user}
+        collectionName={collectionName}
+      />
       <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 w-full flex-grow flex flex-col ${!user ? 'items-center justify-center' : ''}`}>
         {!user ? (
           <Auth />
@@ -361,6 +377,8 @@ const App: React.FC = () => {
               onLogout={handleLogout}
               onExport={handleExport}
               onImportClick={handleImportClick}
+              collectionName={collectionName}
+              onCollectionNameUpdate={setCollectionName}
             />
             <MigrationAssistant userId={user.id} onMigrationComplete={async () => {
               const cloudItems = await fetchItemsFromCloud(user.id);
@@ -370,7 +388,9 @@ const App: React.FC = () => {
               {items.length === 0 ? (
                 <div className="text-center py-20 px-4 bg-white dark:bg-zinc-800 rounded-lg shadow-md w-full">
                   <MaterialIcon name="inventory_2" className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-                  <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">Willkommen beim Collection Manager!</h3>
+                  <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">Willkommen beim
+                    <br />
+                    ZoéLu Collection Manager!</h3>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Ihre Sammlung ist noch leer. Fügen Sie Ihr erstes Teil hinzu oder laden Sie Beispieldaten, um die Funktionen zu entdecken.
                   </p>
@@ -405,7 +425,7 @@ const App: React.FC = () => {
                         </button>
                       </div>
                       <div className="h-6 border-l border-gray-300 dark:border-zinc-600 mx-2"></div>
-                      <button onClick={() => setIsStatsModalOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-lg text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none" aria-label="Statistik anzeigen" title="Statistik anzeigen">
+                      <button onClick={() => setIsStatsModalOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600 focus:outline-none" aria-label="Statistik anzeigen" title="Statistik anzeigen">
                         <MaterialIcon name="bar_chart" className="text-xl" />
                       </button>
                       <div className="h-6 border-l border-gray-300 dark:border-zinc-600 mx-2"></div>
@@ -429,15 +449,15 @@ const App: React.FC = () => {
                           <MaterialIcon name="grid_view" className="text-xl" />
                         </button>
                         <button onClick={() => setViewMode('list')} className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${viewMode === 'list' ? 'bg-brand-pink text-brand-text' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600'}`} aria-label="Listen-Ansicht">
-                          <MaterialIcon name="view_list" className="text-xl" />
+                          <MaterialIcon name="view_agenda" className="text-xl" />
                         </button>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => setIsStatsModalOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-lg text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none" aria-label="Statistik anzeigen" title="Statistik anzeigen">
+                        <button onClick={() => setIsStatsModalOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600 focus:outline-none" aria-label="Statistik anzeigen" title="Statistik anzeigen">
                           <MaterialIcon name="bar_chart" className="text-xl" />
                         </button>
-                        <button onClick={() => setIsFiltersOpen(prev => !prev)} className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600 focus:outline-none" aria-label="Filter anzeigen/verstecken">
-                          <MaterialIcon name="filter_alt" className="text-gray-700 dark:text-gray-200 text-xl" />
+                        <button onClick={() => setIsFiltersOpen(prev => !prev)} className={`w-10 h-10 flex items-center justify-center rounded-lg focus:outline-none ${isFiltersOpen ? 'bg-brand-pink text-brand-text' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600'}`} aria-label="Filter anzeigen/verstecken">
+                          <MaterialIcon name="filter_alt" className="text-xl" fill={true} />
                         </button>
                       </div>
                     </div>
@@ -449,7 +469,7 @@ const App: React.FC = () => {
                       </button>
                       <button onClick={openAddModal} className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none" title={isSampleData ? 'Beispieldaten entfernen und eine neue Sammlung anlegen' : 'Ein neues Teil zu deiner Sammlung hinzufügen'}>
                         <MaterialIcon name="add" className="mr-2 text-xl" />
-                        {isSampleData ? 'Start' : 'Neu'}
+                        {isSampleData ? 'Eigene Sammlung starten' : 'Neues Teil'}
                       </button>
                     </div>
                   </div>
@@ -517,9 +537,9 @@ const App: React.FC = () => {
                     )
                   ) : (
                     <div className="text-center py-10 px-4">
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Keine Artikel gefunden</h3>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Keine Teile gefunden</h3>
                       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Passen Sie Ihre Filter an oder fügen Sie neue Artikel hinzu.
+                        Passe Deine Filter an oder füge neue Teile hinzu.
                       </p>
                     </div>
                   )}
@@ -617,6 +637,7 @@ const App: React.FC = () => {
         style={{ display: 'none' }}
         accept=".json"
       />
+      <ScrollToTop />
     </div>
   );
 };
