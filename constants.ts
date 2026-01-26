@@ -10,6 +10,8 @@ export const COLORS = [
   'Mint', 'Türkis', 'Petrol', 'Bunt'
 ];
 
+
+
 export const COLOR_MAP: { [key: string]: string } = {
   'Schwarz': '#000000',
   'Weiß': '#ffffff',

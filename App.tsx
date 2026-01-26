@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Item, Filters, SortBy, ItemType, ItemShape } from './types';
 import { fetchItemsFromCloud, saveItemToCloud, deleteItemFromCloud, getLocalItems, saveItemsToCloud, deleteAllItemsFromCloud } from './services/itemService';
 import { SAMPLE_ITEMS } from './constants';
+import { APP_UPDATES } from './updateConfig';
 import Header from './components/Header';
 import FilterControls from './components/FilterControls';
 import ItemCard from './components/ItemCard';
@@ -12,6 +13,7 @@ import KombiBuilder from './components/KombiBuilder';
 import Footer from './components/Footer';
 import { useAuth } from './services/authService';
 import { Auth } from './components/Auth';
+import UpdateNotification from './components/UpdateNotification';
 import { supabase } from './services/supabase';
 import { MigrationAssistant } from './components/MigrationAssistant';
 import AccountModal from './components/AccountModal';
@@ -288,8 +290,10 @@ const App: React.FC = () => {
       totalCost,
       klappenSquare: klappen.filter(i => i.shape === ItemShape.Square).length,
       klappenRund: klappen.filter(i => i.shape === ItemShape.Rund).length,
+      klappenMini: klappen.filter(i => i.shape === ItemShape.Mini).length,
       körperSquare: körper.filter(i => i.shape === ItemShape.Square).length,
       körperRund: körper.filter(i => i.shape === ItemShape.Rund).length,
+      körperMini: körper.filter(i => i.shape === ItemShape.Mini).length,
       henkel,
       accessoires,
       currentCollectionCount: items.length - soldItems.length,
@@ -601,8 +605,10 @@ const App: React.FC = () => {
             <div className="space-y-1">
               <div className="flex justify-between"><span className="font-semibold">Klappen (Square):</span><span>{stats.klappenSquare}</span></div>
               <div className="flex justify-between"><span className="font-semibold">Klappen (Rund):</span><span>{stats.klappenRund}</span></div>
+              <div className="flex justify-between"><span className="font-semibold">Klappen (Mini):</span><span>{stats.klappenMini}</span></div>
               <div className="flex justify-between"><span className="font-semibold">Körper (Square):</span><span>{stats.körperSquare}</span></div>
               <div className="flex justify-between"><span className="font-semibold">Körper (Rund):</span><span>{stats.körperRund}</span></div>
+              <div className="flex justify-between"><span className="font-semibold">Körper (Mini):</span><span>{stats.körperMini}</span></div>
               <div className="flex justify-between"><span className="font-semibold">Anzahl Henkel:</span><span>{stats.henkel}</span></div>
               <div className="flex justify-between"><span className="font-semibold">Anzahl Accessoires:</span><span>{stats.accessoires}</span></div>
             </div>
@@ -638,6 +644,12 @@ const App: React.FC = () => {
         accept=".json"
       />
       <ScrollToTop />
+      <UpdateNotification
+        id={APP_UPDATES[0].id}
+        title={APP_UPDATES[0].title}
+        message={APP_UPDATES[0].message}
+        buttonText={APP_UPDATES[0].buttonText}
+      />
     </div>
   );
 };

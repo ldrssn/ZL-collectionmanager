@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { updateUserEmail, updateUserPassword, updateCollectionName } from '../services/authService';
 import MaterialIcon from './MaterialIcon';
+import { APP_UPDATES } from '../updateConfig';
+import { renderFormattedMessage } from '../services/formatService';
 
 interface AccountModalProps {
     isOpen: boolean;
@@ -23,7 +25,7 @@ const AccountModal: React.FC<AccountModalProps> = ({
     collectionName,
     onCollectionNameUpdate,
 }) => {
-    const [activeTab, setActiveTab] = useState<'profile' | 'data'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'data' | 'news'>('profile');
     const [newCollectionName, setNewCollectionName] = useState(collectionName || '');
     const [newEmail, setNewEmail] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -158,6 +160,15 @@ const AccountModal: React.FC<AccountModalProps> = ({
                                     >
                                         Datenverwaltung
                                     </button>
+                                    <button
+                                        onClick={() => setActiveTab('news')}
+                                        className={`${activeTab === 'news'
+                                            ? 'border-brand-pink text-brand-pink'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+                                    >
+                                        Neuigkeiten
+                                    </button>
                                 </nav>
                             </div>
 
@@ -274,6 +285,27 @@ const AccountModal: React.FC<AccountModalProps> = ({
                                                 Importieren
                                             </button>
                                         </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'news' && (
+                                    <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2">
+                                        {[...APP_UPDATES].sort((a, b) => b.date.localeCompare(a.date)).map((update) => (
+                                            <div key={update.id} className="border-b border-gray-100 dark:border-zinc-700 pb-8 last:border-0 last:pb-0">
+                                                <div className="flex items-center text-zinc-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">
+                                                    <span className="bg-brand-pink/10 text-brand-pink px-2 py-0.5 rounded mr-2">
+                                                        {new Date(update.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                    </span>
+                                                    Update
+                                                </div>
+                                                <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 leading-tight">
+                                                    {update.title}
+                                                </h4>
+                                                <div className="text-gray-600 dark:text-gray-300 leading-relaxed message-preview">
+                                                    {renderFormattedMessage(update.message)}
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>

@@ -11,6 +11,7 @@ export enum ItemType {
 export enum ItemShape {
   Square = 'Square',
   Rund = 'Rund',
+  Mini = 'Mini',
 }
 
 export interface Item {
