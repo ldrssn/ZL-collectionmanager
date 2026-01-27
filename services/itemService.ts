@@ -94,6 +94,20 @@ export const saveItemsToCloud = async (userId: string, items: Item[]): Promise<v
 // Delete an item from Supabase
 export const deleteItemFromCloud = async (userId: string, itemId: string): Promise<void> => {
   try {
+    // First, fetch the item to get the photo URL
+    const { data: item } = await supabase
+      .from('items')
+      .select('photo')
+      .eq('id', itemId)
+      .eq('user_id', userId)
+      .single();
+
+    if (item && item.photo) {
+      // We call deleteImage which is defined lower in this file.
+      // Since this function is called after module initialization, it will be available.
+      await deleteImage(item.photo);
+    }
+
     const { error } = await supabase
       .from('items')
       .delete()
@@ -122,9 +136,9 @@ export const deleteAllItemsFromCloud = async (userId: string): Promise<void> => 
 };
 
 // Upload an image to Supabase Storage
-export const uploadImage = async (file: File): Promise<string | null> => {
+export const uploadImage = async (file: File | Blob): Promise<string | null> => {
   try {
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file instanceof File ? file.name.split('.').pop() : 'jpg';
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `item-images/${fileName}`;
 
@@ -142,6 +156,31 @@ export const uploadImage = async (file: File): Promise<string | null> => {
   } catch (error) {
     console.error('Error uploading image:', error);
     return null;
+  }
+};
+
+// Delete an image from Supabase Storage
+export const deleteImage = async (url: string): Promise<void> => {
+  try {
+    if (!url) return;
+
+    // Extract file path from URL
+    // Format: .../collection-images/item-images/<filename>
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split('/');
+    const bucketIndex = pathParts.indexOf('collection-images');
+
+    if (bucketIndex === -1 || bucketIndex === pathParts.length - 1) return;
+
+    const filePath = pathParts.slice(bucketIndex + 1).join('/');
+
+    const { error } = await supabase.storage
+      .from('collection-images')
+      .remove([filePath]);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error deleting image:', error);
   }
 };
 

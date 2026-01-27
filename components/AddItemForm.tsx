@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Item, ItemType, ItemShape } from '../types';
 import { COLORS, COLOR_MAP } from '../constants';
 import { generateUUID } from '../services/utils';
-import { uploadImage } from '../services/itemService';
+import { uploadImage, deleteImage } from '../services/itemService';
 import MaterialIcon from './MaterialIcon';
+import ImageEditor from './ImageEditor';
 
 interface ItemFormProps {
   onAddItem: (item: Item) => void;
@@ -27,6 +28,7 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
   const [notes, setNotes] = useState('');
   const [uploading, setUploading] = useState(false);
   const [isColorDropdownOpen, setIsColorDropdownOpen] = useState(false);
+  const [editingImage, setEditingImage] = useState<string | null>(null);
   const colorDropdownRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,21 +72,30 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
     }
   }, [initialData]);
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setUploading(true);
-      const url = await uploadImage(file);
-      if (url) {
-        setPhoto(url);
-      } else {
-        alert('Fehler beim Hochladen des Bildes.');
-      }
-      setUploading(false);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setEditingImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setUploading(true);
+    setEditingImage(null);
+    const url = await uploadImage(croppedBlob);
+    if (url) {
+      setPhoto(url);
+    } else {
+      alert('Fehler beim Hochladen des Bildes.');
+    }
+    setUploading(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) {
       alert('Bitte geben Sie einen Namen an.');
@@ -111,6 +122,11 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
     };
 
     if (initialData) {
+      // Check if photo has changed and delete old image if necessary
+      if (initialData.photo && photo && initialData.photo !== photo) {
+        await deleteImage(initialData.photo);
+      }
+
       const updatedItem: Item = {
         ...initialData,
         ...itemData,
@@ -149,11 +165,31 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
           onChange={handleImageChange}
           accept="image/*"
           disabled={uploading}
-          className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-zinc-600 file:text-brand-pink dark:file:text-brand-pink-dark hover:file:bg-rose-100 dark:hover:file:bg-zinc-500"
+          className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-zinc-600 file:text-gray-900 dark:file:text-brand-pink-dark hover:file:bg-rose-100 dark:hover:file:bg-zinc-500"
         />
         {uploading && <p className="text-xs text-brand-pink mt-1 animate-pulse">Wird hochgeladen...</p>}
-        {photo && <img src={photo} alt="Vorschau" className="mt-2 h-24 w-24 object-cover rounded-md" />}
+        {photo && (
+          <div className="mt-2 relative inline-block group">
+            <img src={photo} alt="Vorschau" className="h-24 w-24 object-cover rounded-md" />
+            <button
+              type="button"
+              onClick={() => setEditingImage(photo)}
+              className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Bild anpassen"
+            >
+              <MaterialIcon name="crop" className="text-xl" />
+            </button>
+          </div>
+        )}
       </div>
+
+      {editingImage && (
+        <ImageEditor
+          image={editingImage}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setEditingImage(null)}
+        />
+      )}
       <div className={`grid grid-cols-1 ${![ItemType.Henkel, ItemType.Accessoire].includes(type) ? 'md:grid-cols-2' : ''} gap-4`}>
         <div>
           <label htmlFor="type" className={labelBaseClasses}>Kategorie</label>

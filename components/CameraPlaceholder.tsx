@@ -6,7 +6,7 @@ const CameraPlaceholder: React.FC<{ className?: string; iconSize?: number }> = (
     iconSize = 92
 }) => {
     return (
-        <div className={`flex items-center justify-center bg-gray-100 dark:bg-zinc-700 text-brand-pink ${className}`}>
+        <div className={`flex items-center justify-center bg-brand-beige text-brand-pink ${className}`}>
             <MaterialIcon name="photo_camera" size={iconSize} />
         </div>
     );

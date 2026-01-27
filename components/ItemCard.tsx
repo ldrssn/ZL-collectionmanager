@@ -11,22 +11,6 @@ interface ItemCardProps {
   activeColorFilter: string;
 }
 
-// Helper function to convert hex to RGB
-const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16),
-  } : null;
-};
-
-// Helper function to determine if a color is too light for a shadow
-const getColorBrightness = (color: { r: number; g: number; b: number }): number => {
-  return (color.r * 299 + color.g * 587 + color.b * 114) / 1000;
-};
-
-
 const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onUpdate, activeColorFilter }) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -42,79 +26,78 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onUpdate, activeColor
     onUpdate({ ...item, usageCount: item.usageCount + 1 });
   };
 
-  const shadowStyle = useMemo(() => {
-    const itemColorHex = COLOR_MAP[item.color[0]] || '#cccccc';
-    const rgb = hexToRgb(itemColorHex);
 
-    if (rgb && getColorBrightness(rgb) < 230) { // Don't apply color shadow for very light colors
-      const glowColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`;
-      return { boxShadow: `0 10px 15px -3px ${glowColor}, 0 4px 6px -2px ${glowColor}` };
-    }
-    return {}; // Fallback to default shadow from className
-  }, [item.color]);
-
-  const glowStyle = useMemo(() => {
-    if (activeColorFilter !== 'all' && item.color.includes(activeColorFilter)) {
-      const itemColorHex = COLOR_MAP[activeColorFilter] || '#cccccc';
-      const rgb = hexToRgb(itemColorHex);
-      if (rgb) {
-        const glowColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6)`;
-        return { boxShadow: `0 0 20px 5px ${glowColor}` };
-      }
-    }
-    return {};
-  }, [activeColorFilter, item.color]);
-
-  const costBasis = item.purchasePrice ?? item.price;
-  const costPerWear = item.usageCount > 0 ? (costBasis / item.usageCount).toFixed(2) : costBasis.toFixed(2);
-
+  const getTitleFontSize = (name: string) => {
+    if (name.length > 60) return 'text-xs';
+    if (name.length > 40) return 'text-sm';
+    if (name.length > 25) return 'text-base';
+    return 'text-lg';
+  };
 
   return (
-    <div className="w-full max-w-[280px] h-[420px] [perspective:1000px] group mx-auto">
+    <div className="w-full max-w-[280px] h-auto [perspective:1000px] group mx-auto">
       <div
-        className={`relative h-full w-full rounded-xl transition-all duration-500 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
-        style={glowStyle}
+        className={`relative h-full w-full rounded-2xl transition-all duration-500 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
       >
         {/* FRONT FACE */}
         <div
-          className="absolute inset-0 w-full h-full [backface-visibility:hidden] rounded-xl overflow-hidden bg-white dark:bg-zinc-800 shadow-lg cursor-pointer"
-          style={shadowStyle}
+          className="relative w-full h-full [backface-visibility:hidden] rounded-2xl overflow-hidden bg-brand-beige shadow-lg cursor-pointer flex flex-col"
           onClick={handleFlip}
         >
-          <div className="relative h-full">
+          {/* Top Bar */}
+          <div className="bg-brand-beige h-12 flex items-center justify-between px-3 flex-shrink-0">
+            <div className="flex items-center">
+              {item.type === ItemType.Kombination && (
+                <MaterialIcon name="auto_awesome_motion" className="text-xl text-brand-text" />
+              )}
+            </div>
+            <button
+              onClick={handleIncrementUsage}
+              className="flex items-center space-x-2 hover:opacity-70 transition-opacity cursor-pointer p-1"
+            >
+              <MaterialIcon name="favorite" className="text-xl text-brand-pink" fill={true} />
+              <span className="text-sm font-bold text-brand-text">{item.usageCount}</span>
+            </button>
+          </div>
+
+          {/* Image Container (Square) */}
+          <div className="relative aspect-square w-full overflow-hidden bg-brand-beige">
             {item.photo ? (
               <img src={item.photo} alt={item.name} className="w-full h-full object-cover" />
             ) : (
               <CameraPlaceholder />
             )}
             {item.isSold && (
-              <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">VERKAUFT</div>
+              <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10">VERKAUFT</div>
             )}
-            <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-10">
-              <MaterialIcon name="favorite" className="text-base text-brand-pink" fill={true} />
-              <span>{item.usageCount}</span>
-            </div>
-            <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/60 to-transparent">
-              <h3 className="text-white text-xl font-bold">{item.name}</h3>
-            </div>
+          </div>
+
+          <div className="bg-brand-beige px-4 flex-shrink-0 flex items-center h-[92px]">
+            <h3 className={`text-brand-text font-bold leading-tight line-clamp-2 w-full text-center ${getTitleFontSize(item.name)}`}>
+              {item.name}
+            </h3>
           </div>
         </div>
 
         {/* BACK FACE */}
         <div
-          className="absolute inset-0 h-full w-full rounded-xl bg-zinc-800 text-white [transform:rotateY(180deg)] [backface-visibility:hidden] flex flex-col p-4"
+          className="absolute inset-0 h-full w-full rounded-2xl bg-brand-beige text-brand-text [transform:rotateY(180deg)] [backface-visibility:hidden] flex flex-col p-4"
           onClick={handleFlip}
         >
           <div className="flex-grow overflow-y-auto pr-2 space-y-2 text-sm">
-            <h3 className="text-xl font-bold text-brand-pink mb-2 text-center">{item.name}</h3>
-            <div className="flex justify-between border-b border-zinc-600 pb-1"><span>Typ:</span> <span>{item.type}</span></div>
-            {![ItemType.Henkel, ItemType.Accessoire].includes(item.type) && <div className="flex justify-between border-b border-zinc-600 pb-1"><span>Form:</span> <span>{item.shape}</span></div>}
-            <div className="flex justify-between items-start border-b border-zinc-600 pb-1">
+            <div className="h-[60px] flex items-center justify-center mb-2">
+              <h3 className={`font-bold text-brand-text text-center line-clamp-2 ${getTitleFontSize(item.name)}`}>
+                {item.name}
+              </h3>
+            </div>
+            <div className="flex justify-between border-b border-zinc-300 pb-1"><span>Typ:</span> <span className="font-medium">{item.type}</span></div>
+            {![ItemType.Henkel, ItemType.Accessoire].includes(item.type) && <div className="flex justify-between border-b border-zinc-300 pb-1"><span>Form:</span> <span className="font-medium">{item.shape}</span></div>}
+            <div className="flex justify-between items-start border-b border-zinc-300 pb-1">
               <span>Farbe:</span>
-              <div className="flex flex-col items-end gap-1 max-w-[60%] text-right">
+              <div className="flex flex-col items-end gap-1 max-w-[60%] text-right font-medium">
                 {item.color.map(c => (
                   <div key={c} className="flex items-center gap-2">
-                    <span className="w-4 h-4 rounded-full border border-zinc-500 flex-shrink-0" style={{ background: COLOR_MAP[c] }}></span>
+                    <span className="w-3 h-3 rounded-full border border-zinc-400 flex-shrink-0" style={{ background: COLOR_MAP[c] }}></span>
                     <span>{c}</span>
                   </div>
                 ))}
@@ -122,28 +105,29 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onUpdate, activeColor
             </div>
             {item.type !== ItemType.Kombination && (
               <>
-                <div className="flex justify-between border-b border-zinc-600 pb-1"><span>Originalpreis:</span> <span>€{item.price.toFixed(2)}</span></div>
-                {item.purchasePrice && <div className="flex justify-between border-b border-zinc-600 pb-1"><span>Kaufpreis:</span> <span>€{item.purchasePrice.toFixed(2)}</span></div>}
+                <div className="flex justify-between border-b border-zinc-300 pb-1"><span>Originalpreis:</span> <span className="font-medium">€{item.price.toFixed(2)}</span></div>
+                {item.purchasePrice && <div className="flex justify-between border-b border-zinc-300 pb-1"><span>Kaufpreis:</span> <span className="font-medium">€{item.purchasePrice.toFixed(2)}</span></div>}
                 {item.isSold && item.sellingPrice && (
-                  <div className="flex justify-between border-b border-green-400 text-green-400 pb-1 font-semibold"><span>Verkaufspreis:</span> <span>€{item.sellingPrice.toFixed(2)}</span></div>
+                  <div className="flex justify-between border-b border-green-500 text-green-600 pb-1 font-semibold"><span>Verkaufspreis:</span> <span>€{item.sellingPrice.toFixed(2)}</span></div>
                 )}
-                <div className="flex justify-between border-b border-zinc-600 pb-1"><span>Kosten/Tragen:</span> <span>€{costPerWear}</span></div>
               </>
             )}
-            <div className="flex justify-between border-b border-zinc-600 pb-1"><span>Getragen:</span> <span>{item.usageCount} Mal</span></div>
+            <div className="flex justify-between border-b border-zinc-300 pb-1"><span>Getragen:</span> <span className="font-medium">{item.usageCount} Mal</span></div>
 
             {item.notes && (
               <div className="pt-2">
-                <p className="font-semibold text-brand-pink">Notizen:</p>
-                <p className="text-zinc-300 bg-zinc-700 p-2 rounded-md text-xs"><em>{item.notes}</em></p>
+                <p className="font-semibold text-brand-pink mb-1">Notizen:</p>
+                <div className="bg-white/40 p-2 rounded-md text-xs">
+                  <p className="italic text-brand-text/80">{item.notes}</p>
+                </div>
               </div>
             )}
           </div>
 
-          <div className="flex-shrink-0 pt-3 mt-auto border-t border-zinc-600 flex items-center justify-between gap-2">
-            <button onClick={() => onEdit(item)} className="flex-grow h-10 px-3 bg-gray-200 dark:bg-zinc-600 text-gray-800 dark:text-gray-200 text-xs font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-500 transition-colors">Bearbeiten</button>
+          <div className="flex-shrink-0 pt-3 mt-auto border-t border-zinc-300 flex items-center justify-between gap-2">
+            <button onClick={() => onEdit(item)} className="flex-grow h-10 px-3 bg-white/60 text-brand-text text-xs font-semibold rounded-lg hover:bg-white/80 transition-colors border border-zinc-200">Bearbeiten</button>
             <button onClick={handleIncrementUsage} className="flex-shrink-0 w-10 h-10 bg-brand-pink text-brand-text rounded-lg hover:bg-brand-pink-dark transition-colors flex items-center justify-center">
-              <MaterialIcon name="favorite" className="text-xl" fill={true} />
+              <MaterialIcon name="heart_plus" className="text-xl" fill={false} />
             </button>
           </div>
         </div>
