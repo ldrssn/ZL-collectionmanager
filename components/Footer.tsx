@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
         <div className="flex flex-row justify-center items-center gap-2 sm:gap-6">
           <p>&copy; {new Date().getFullYear()} by ldrssn</p>
           <p>|</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">v0.1 (Beta)</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">v0.2 (Beta)</p>
           <p>|</p>
           <a
             href="mailto:hey@ldrssn.de"
