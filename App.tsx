@@ -19,6 +19,7 @@ import { MigrationAssistant } from './components/MigrationAssistant';
 import AccountModal from './components/AccountModal';
 import MaterialIcon from './components/MaterialIcon';
 import ScrollToTop from './components/ScrollToTop';
+import LoadingScreen from './components/LoadingScreen';
 
 type Theme = 'light' | 'dark';
 
@@ -42,6 +43,7 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>('light');
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
   const { user, loading: authLoading } = useAuth();
+  const [itemsLoading, setItemsLoading] = useState(true);
   const [isLoadedFromCloud, setIsLoadedFromCloud] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [collectionName, setCollectionName] = useState('My ZoéLu Collection');
@@ -89,16 +91,23 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const loadItems = async () => {
-      if (user) {
-        const cloudItems = await fetchItemsFromCloud(user.id);
-        setItems(cloudItems);
-        setIsLoadedFromCloud(true);
-      } else {
-        const localItems = getLocalItems();
-        if (localItems.length > 0) {
-          setItems(localItems);
+      setItemsLoading(true);
+      try {
+        if (user) {
+          const cloudItems = await fetchItemsFromCloud(user.id);
+          setItems(cloudItems);
+          setIsLoadedFromCloud(true);
+        } else {
+          const localItems = getLocalItems();
+          if (localItems.length > 0) {
+            setItems(localItems);
+          }
+          setIsLoadedFromCloud(false);
         }
-        setIsLoadedFromCloud(false);
+      } catch (error) {
+        console.error("Error loading items:", error);
+      } finally {
+        setItemsLoading(false);
       }
     };
     loadItems();
@@ -348,12 +357,8 @@ const App: React.FC = () => {
     return result;
   }, [items, filters, sortBy, searchTerm]);
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-zinc-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-pink"></div>
-      </div>
-    );
+  if (authLoading || itemsLoading) {
+    return <LoadingScreen />;
   }
 
   const handleLogout = async () => {
