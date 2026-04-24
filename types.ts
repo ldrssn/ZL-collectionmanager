@@ -27,12 +27,13 @@ export interface Item {
   isSold: boolean;
   sellingPrice?: number;
   notes?: string;
+  gallery?: string[];
 }
 
 export interface Filters {
-  type: 'all' | ItemType;
-  shape: 'all' | ItemShape;
-  color: 'all' | string;
+  type: ItemType[];
+  shape: ItemShape[];
+  color: string[];
   soldStatus: 'all' | 'sold' | 'in_collection';
 }
 

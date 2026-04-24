@@ -26,7 +26,8 @@ export const fetchItemsFromCloud = async (userId: string): Promise<Item[]> => {
       usageCount: row.usage_count,
       isSold: row.is_sold,
       sellingPrice: row.selling_price ? Number(row.selling_price) : undefined,
-      notes: row.notes || undefined
+      notes: row.notes || undefined,
+      gallery: row.gallery || []
     }));
   } catch (error) {
     console.error("Error fetching items from Supabase:", error);
@@ -52,7 +53,8 @@ export const saveItemToCloud = async (userId: string, item: Item): Promise<void>
         usage_count: item.usageCount,
         is_sold: item.isSold,
         selling_price: item.sellingPrice || null,
-        notes: item.notes || null
+        notes: item.notes || null,
+        gallery: item.gallery || []
       });
 
     if (error) throw error;
@@ -77,7 +79,8 @@ export const saveItemsToCloud = async (userId: string, items: Item[]): Promise<v
       usage_count: item.usageCount,
       is_sold: item.isSold,
       selling_price: item.sellingPrice || null,
-      notes: item.notes || null
+      notes: item.notes || null,
+      gallery: item.gallery || []
     }));
 
     const { error } = await supabase
@@ -102,10 +105,15 @@ export const deleteItemFromCloud = async (userId: string, itemId: string): Promi
       .eq('user_id', userId)
       .single();
 
-    if (item && item.photo) {
-      // We call deleteImage which is defined lower in this file.
-      // Since this function is called after module initialization, it will be available.
-      await deleteImage(item.photo);
+    if (item) {
+      if (item.photo) {
+        await deleteImage(item.photo);
+      }
+      if (item.gallery && Array.isArray(item.gallery)) {
+        for (const photoUrl of item.gallery) {
+          await deleteImage(photoUrl);
+        }
+      }
     }
 
     const { error } = await supabase

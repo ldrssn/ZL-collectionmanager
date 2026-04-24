@@ -3,16 +3,27 @@ import { Item, ItemType } from '../types';
 import { COLOR_MAP } from '../constants';
 import CameraPlaceholder from './CameraPlaceholder';
 import MaterialIcon from './MaterialIcon';
+import CombinationGallery from './CombinationGallery';
 
 interface ItemCardProps {
   item: Item;
   onEdit: (item: Item) => void;
   onUpdate: (item: Item) => void;
-  activeColorFilter: string;
 }
 
-const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onUpdate, activeColorFilter }) => {
+const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onUpdate }) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [activeGalleryIndex, setActiveGalleryIndex] = useState<number | null>(null);
+
+  const galleryImages = useMemo(() => {
+    if (item.type !== ItemType.Kombination) return [];
+    const images = [];
+    if (item.photo) images.push(item.photo);
+    if (item.gallery && Array.isArray(item.gallery)) {
+      images.push(...item.gallery);
+    }
+    return [...new Set(images)]; // Ensure unique URLs
+  }, [item]);
 
   const handleFlip = (e: React.MouseEvent) => {
     // Prevent flipping if a button or its child element was clicked
@@ -114,6 +125,26 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onUpdate, activeColor
             )}
             <div className="flex justify-between border-b border-zinc-300 pb-1"><span>Getragen:</span> <span className="font-medium">{item.usageCount} Mal</span></div>
 
+            {item.type === ItemType.Kombination && (
+              <div className="pt-2">
+                <p className="font-semibold text-brand-pink mb-1 text-xs uppercase tracking-wider">Galerie:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {galleryImages.map((src, idx) => (
+                    <button
+                      key={src}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveGalleryIndex(idx);
+                      }}
+                      className="aspect-square rounded-md overflow-hidden border border-zinc-200 hover:border-brand-pink transition-all bg-white shadow-sm"
+                    >
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {item.notes && (
               <div className="pt-2">
                 <p className="font-semibold text-brand-pink mb-1">Notizen:</p>
@@ -132,6 +163,14 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onEdit, onUpdate, activeColor
           </div>
         </div>
       </div>
+
+      {activeGalleryIndex !== null && (
+        <CombinationGallery
+          items={galleryImages}
+          initialIndex={activeGalleryIndex}
+          onClose={() => setActiveGalleryIndex(null)}
+        />
+      )}
     </div>
   );
 };

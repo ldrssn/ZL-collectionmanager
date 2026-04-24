@@ -60,7 +60,9 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
     const [selectedAccessoire, setSelectedAccessoire] = useState<Item | null>(null);
     const [kombinationName, setKombinationName] = useState('');
     const [kombinationPhoto, setKombinationPhoto] = useState<string | null>(null);
+    const [gallery, setGallery] = useState<string[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
 
     const availableBodies = useMemo(() => items.filter(i => i.type === ItemType.Körper && !i.isSold), [items]);
     const availableFlaps = useMemo(() => {
@@ -74,16 +76,58 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
     const handleBack = () => setCurrentStep(prev => prev - 1);
 
     const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
+        if (e.target.files && e.target.files.length > 0) {
             setUploading(true);
-            const url = await uploadImage(e.target.files[0]);
-            if (url) {
-                setKombinationPhoto(url);
+            const newImages: string[] = [];
+            for (let i = 0; i < e.target.files.length; i++) {
+                const url = await uploadImage(e.target.files[i]);
+                if (url) newImages.push(url);
+            }
+            
+            if (newImages.length > 0) {
+                setGallery(prev => [...prev, ...newImages]);
+                if (!kombinationPhoto) {
+                    setKombinationPhoto(newImages[0]);
+                }
             } else {
-                alert('Fehler beim Hochladen des Bildes.');
+                alert('Fehler beim Hochladen der Bilder.');
             }
             setUploading(false);
+            // Reset input values
+            e.target.value = '';
         }
+    };
+
+    const removeGalleryImage = (url: string) => {
+        setGallery(prev => {
+            const filtered = prev.filter(img => img !== url);
+            if (kombinationPhoto === url) {
+                setKombinationPhoto(filtered.length > 0 ? filtered[0] : null);
+            }
+            return filtered;
+        });
+    };
+
+    const setAsCover = (url: string) => {
+        const oldCover = kombinationPhoto;
+        setKombinationPhoto(url);
+        if (oldCover) {
+            setGallery(prev => {
+                const withoutNewCover = prev.filter(img => img !== url);
+                if (!withoutNewCover.includes(oldCover)) {
+                    return [...withoutNewCover, oldCover];
+                }
+                return withoutNewCover;
+            });
+        } else {
+            setGallery(prev => prev.filter(img => img !== url));
+        }
+        setSelectedGalleryImage(null);
+    };
+
+    const handleDeleteImage = (url: string) => {
+        setGallery(prev => prev.filter(img => img !== url));
+        setSelectedGalleryImage(null);
     };
 
     const handleSave = (e: React.FormEvent) => {
@@ -109,6 +153,9 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
             id: generateUUID(),
             name: kombinationName.trim(),
             photo: finalPhoto,
+            id: generateUUID(),
+            name: kombinationName.trim(),
+            photo: finalPhoto,
             type: ItemType.Kombination,
             shape: selectedBody.shape,
             color: combinedColors,
@@ -117,6 +164,7 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
             usageCount: 0,
             isSold: false,
             notes,
+            gallery: gallery.filter(img => img !== finalPhoto),
         };
 
         onAddKombination(newKombination);
@@ -170,49 +218,108 @@ const KombiBuilder: React.FC<KombiBuilderProps> = ({ items, onAddKombination, on
                 ].filter(p => p.item);
 
                 return (
-                    <div>
-                        <h3 className="font-semibold text-center mb-4 text-gray-700 dark:text-gray-300">Schritt 5: Kombination benennen & speichern</h3>
-                        <div className={`grid ${selectedItems.length > 3 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mb-4 p-2 bg-gray-50 dark:bg-zinc-900/50 rounded-lg`}>
-                            {selectedItems.map(({ item, label }) => item && (
-                                <div key={item.id}>
-                                    {item.photo ? (
-                                        <img src={item.photo} alt={item.name} className="rounded-lg aspect-square object-cover" />
-                                    ) : (
-                                        <div className="rounded-lg aspect-square overflow-hidden">
-                                            <CameraPlaceholder />
-                                        </div>
-                                    )}
-                                    <p className="text-xs text-center mt-1 text-gray-600 dark:text-gray-400 truncate">{item.name}</p>
-                                    <p className="text-[10px] text-center text-gray-400 uppercase">{label}</p>
-                                </div>
-                            ))}
-                        </div>
-                        <form onSubmit={handleSave} className="space-y-4">
-                            <div>
-                                <label htmlFor="kombi-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name der Kombination</label>
-                                <input type="text" id="kombi-name" value={kombinationName} onChange={(e) => setKombinationName(e.target.value)} required className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-brand-pink focus:border-brand-pink sm:text-sm dark:bg-zinc-700 dark:border-zinc-600 dark:placeholder-zinc-400 dark:text-white" />
-                            </div>
-                            <div>
-                                <label htmlFor="kombi-photo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto (optional)</label>
-                                <input
-                                    type="file"
-                                    id="kombi-photo"
-                                    onChange={handlePhotoChange}
-                                    accept="image/*"
-                                    disabled={uploading}
-                                    className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-zinc-600 file:text-brand-pink dark:file:text-brand-pink-dark hover:file:bg-rose-100 dark:hover:file:bg-zinc-500"
-                                />
-                                {uploading && <p className="text-xs text-brand-pink mt-1 animate-pulse">Wird hochgeladen...</p>}
-                                {kombinationPhoto ? (
-                                    <img src={kombinationPhoto} alt="Preview" className="mt-2 h-24 w-24 object-cover rounded-md" />
-                                ) : (
-                                    <div className="mt-2 h-24 w-24 rounded-md overflow-hidden border border-gray-300 dark:border-zinc-600">
-                                        <CameraPlaceholder />
+                    <>
+                        <div>
+                            <h3 className="font-semibold text-center mb-4 text-gray-700 dark:text-gray-300">Schritt 5: Kombination benennen & speichern</h3>
+                            <div className={`grid ${selectedItems.length > 3 ? 'grid-cols-4' : 'grid-cols-3'} gap-2 mb-4 p-2 bg-gray-50 dark:bg-zinc-900/50 rounded-lg`}>
+                                {selectedItems.map(({ item, label }) => item && (
+                                    <div key={item.id}>
+                                        {item.photo ? (
+                                            <img src={item.photo} alt={item.name} className="rounded-lg aspect-square object-cover" />
+                                        ) : (
+                                            <div className="rounded-lg aspect-square overflow-hidden">
+                                                <CameraPlaceholder />
+                                            </div>
+                                        )}
+                                        <p className="text-xs text-center mt-1 text-gray-600 dark:text-gray-400 truncate">{item.name}</p>
+                                        <p className="text-[10px] text-center text-gray-400 uppercase">{label}</p>
                                     </div>
-                                )}
+                                ))}
                             </div>
-                        </form>
-                    </div>
+                            <form onSubmit={handleSave} className="space-y-4">
+                                <div>
+                                    <label htmlFor="kombi-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name der Kombination</label>
+                                    <input type="text" id="kombi-name" value={kombinationName} onChange={(e) => setKombinationName(e.target.value)} required className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-brand-pink focus:border-brand-pink sm:text-sm dark:bg-zinc-700 dark:border-zinc-600 dark:placeholder-zinc-400 dark:text-white" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Galerie & Fotos</label>
+                                    <div className="mt-1 flex flex-wrap gap-2 mb-3">
+                                        {gallery.map((url, idx) => (
+                                            <div key={url} className="relative group">
+                                                <img 
+                                                    src={url} 
+                                                    alt={`Gallery ${idx}`} 
+                                                    onClick={() => setSelectedGalleryImage(url)}
+                                                    className={`h-20 w-20 object-cover rounded-md border-2 border-transparent hover:border-brand-pink cursor-pointer transition-all`} 
+                                                />
+                                            </div>
+                                        ))}
+                                        {kombinationPhoto && (
+                                            <div className="relative">
+                                                <img 
+                                                    src={kombinationPhoto} 
+                                                    alt="Cover" 
+                                                    onClick={() => setSelectedGalleryImage(kombinationPhoto)}
+                                                    className="h-20 w-20 object-cover rounded-md border-2 border-brand-pink cursor-pointer shadow-md" 
+                                                />
+                                                <div className="absolute top-0 right-0 p-0.5 bg-brand-pink text-brand-text rounded-bl-md rounded-tr-md">
+                                                    <MaterialIcon name="check" className="text-[10px]" />
+                                                </div>
+                                                <span className="absolute -bottom-4 left-0 right-0 text-center text-[9px] font-bold text-brand-pink uppercase tracking-tighter">Cover</span>
+                                            </div>
+                                        )}
+                                        <label className="h-20 w-20 flex flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 dark:border-zinc-600 hover:border-brand-pink cursor-pointer transition-colors bg-white dark:bg-zinc-700">
+                                            <MaterialIcon name="add_a_photo" className="text-gray-400" />
+                                            <span className="text-[10px] text-gray-400 mt-1">Neu</span>
+                                            <input
+                                                type="file"
+                                                onChange={handlePhotoChange}
+                                                accept="image/*"
+                                                multiple
+                                                disabled={uploading}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    </div>
+                                    {uploading && <p className="text-xs text-brand-pink mt-1 animate-pulse mb-3">Bilder werden hochgeladen...</p>}
+                                </div>
+                            </form>
+                        </div>
+
+                        {selectedGalleryImage && (
+                            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedGalleryImage(null)}>
+                                <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                                    <div className="aspect-square w-full bg-gray-100">
+                                        <img src={selectedGalleryImage} alt="Selected" className="w-full h-full object-contain" />
+                                    </div>
+                                    <div className="p-4 space-y-2">
+                                        {selectedGalleryImage !== kombinationPhoto && (
+                                            <button 
+                                                onClick={() => setAsCover(selectedGalleryImage)}
+                                                className="w-full flex items-center justify-center gap-2 py-3 bg-brand-pink text-brand-text rounded-xl font-bold hover:bg-brand-pink-dark transition-colors"
+                                            >
+                                                <MaterialIcon name="photo_camera" />
+                                                Als Cover festlegen
+                                            </button>
+                                        )}
+                                        <button 
+                                            onClick={() => handleDeleteImage(selectedGalleryImage)}
+                                            className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors"
+                                        >
+                                            <MaterialIcon name="delete" />
+                                            Löschen
+                                        </button>
+                                        <button 
+                                            onClick={() => setSelectedGalleryImage(null)}
+                                            className="w-full py-3 text-gray-500 font-semibold hover:text-gray-700 transition-colors"
+                                        >
+                                            Abbrechen
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 );
             default: return null;
         }

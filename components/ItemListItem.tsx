@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Item, ItemType } from '../types';
 import { COLOR_MAP } from '../constants';
 import CameraPlaceholder from './CameraPlaceholder';
 import MaterialIcon from './MaterialIcon';
-
+import CombinationGallery from './CombinationGallery';
 interface ItemListItemProps {
   item: Item;
   onEdit: (item: Item) => void;
@@ -14,6 +14,17 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onEdit, onUpdate }) =
   const [isExpanded, setIsExpanded] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [activeGalleryIndex, setActiveGalleryIndex] = useState<number | null>(null);
+
+  const galleryImages = useMemo(() => {
+    if (item.type !== ItemType.Kombination) return [];
+    const images = [];
+    if (item.photo) images.push(item.photo);
+    if (item.gallery && Array.isArray(item.gallery)) {
+      images.push(...item.gallery);
+    }
+    return [...new Set(images)]; // Ensure unique URLs
+  }, [item]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -57,7 +68,8 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onEdit, onUpdate }) =
   };
 
   return (
-    <div ref={containerRef} className="bg-brand-beige rounded-lg shadow-md overflow-hidden transition-all duration-300 text-brand-text">
+    <>
+      <div ref={containerRef} className="bg-brand-beige rounded-lg shadow-md overflow-hidden transition-all duration-300 text-brand-text">
       {/* Collapsed View */}
       <div className="flex items-center p-2 cursor-pointer" onClick={handleToggleExpand}>
         {item.photo ? (
@@ -118,6 +130,26 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onEdit, onUpdate }) =
             )}
             <div className="flex justify-between border-b border-zinc-200 pb-1"><span>Getragen:</span> <span className="font-medium">{item.usageCount} Mal</span></div>
 
+            {item.type === ItemType.Kombination && galleryImages.length > 0 && (
+              <div className="pt-2">
+                <p className="font-semibold text-brand-pink mb-1 text-xs uppercase tracking-wider">Galerie:</p>
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                  {galleryImages.map((src, idx) => (
+                    <button
+                      key={src}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveGalleryIndex(idx);
+                      }}
+                      className="aspect-square rounded-md overflow-hidden border border-zinc-200 hover:border-brand-pink transition-all bg-white shadow-sm flex items-center justify-center p-0"
+                    >
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {item.notes && (
               <div className="pt-2">
                 <p className="font-semibold text-brand-pink mb-1">Notizen:</p>
@@ -135,7 +167,16 @@ const ItemListItem: React.FC<ItemListItemProps> = ({ item, onEdit, onUpdate }) =
           </div>
         </div>
       </div>
-    </div>
+      </div>
+
+      {activeGalleryIndex !== null && (
+        <CombinationGallery
+          items={galleryImages}
+          initialIndex={activeGalleryIndex}
+          onClose={() => setActiveGalleryIndex(null)}
+        />
+      )}
+    </>
   );
 };
 

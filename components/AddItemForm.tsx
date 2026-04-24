@@ -26,9 +26,11 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
   const [isSold, setIsSold] = useState(false);
   const [sellingPrice, setSellingPrice] = useState('');
   const [notes, setNotes] = useState('');
+  const [gallery, setGallery] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isColorDropdownOpen, setIsColorDropdownOpen] = useState(false);
   const [editingImage, setEditingImage] = useState<string | null>(null);
+  const [selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
   const colorDropdownRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,6 +58,7 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
       setIsSold(initialData.isSold);
       setSellingPrice(initialData.sellingPrice ? String(initialData.sellingPrice) : '');
       setNotes(initialData.notes || '');
+      setGallery(initialData.gallery || []);
     } else {
       // Reset form for "add new" mode
       setName('');
@@ -69,6 +72,7 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
       setIsSold(false);
       setSellingPrice('');
       setNotes('');
+      setGallery([]);
     }
   }, [initialData]);
 
@@ -88,11 +92,65 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
     setEditingImage(null);
     const url = await uploadImage(croppedBlob);
     if (url) {
-      setPhoto(url);
+      if (type === ItemType.Kombination) {
+        setGallery(prev => [...prev, url]);
+        if (!photo) setPhoto(url);
+      } else {
+        setPhoto(url);
+      }
     } else {
       alert('Fehler beim Hochladen des Bildes.');
     }
     setUploading(false);
+  };
+
+  const handleAddGalleryImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setUploading(true);
+      const newUrls: string[] = [];
+      for (let i = 0; i < e.target.files.length; i++) {
+        const url = await uploadImage(e.target.files[i]);
+        if (url) newUrls.push(url);
+      }
+      if (newUrls.length > 0) {
+        setGallery(prev => [...prev, ...newUrls]);
+        if (!photo) setPhoto(newUrls[0]);
+      }
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeGalleryImage = (url: string) => {
+    setGallery(prev => {
+      const filtered = prev.filter(img => img !== url);
+      if (photo === url) {
+        setPhoto(filtered.length > 0 ? filtered[0] : null);
+      }
+      return filtered;
+    });
+  };
+
+  const setAsCover = (url: string) => {
+    const oldCover = photo;
+    setPhoto(url);
+    if (oldCover) {
+      setGallery(prev => {
+        const withoutNewCover = prev.filter(img => img !== url);
+        if (!withoutNewCover.includes(oldCover)) {
+          return [...withoutNewCover, oldCover];
+        }
+        return withoutNewCover;
+      });
+    } else {
+      setGallery(prev => prev.filter(img => img !== url));
+    }
+    setSelectedGalleryImage(null);
+  };
+
+  const handleDeleteGalleryImage = (url: string) => {
+    setGallery(prev => prev.filter(img => img !== url));
+    setSelectedGalleryImage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,6 +177,7 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
       isSold,
       sellingPrice: isSold ? parseFloat(sellingPrice) : undefined,
       notes,
+      gallery: type === ItemType.Kombination ? gallery.filter(img => img !== photo) : [],
     };
 
     if (initialData) {
@@ -183,6 +242,87 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
         )}
       </div>
 
+      {type === ItemType.Kombination && (
+        <div className="border-t dark:border-zinc-700 pt-4">
+          <label className={labelBaseClasses}>Galerie</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {gallery.map((url, idx) => (
+              <div key={url} className="relative group">
+                <img 
+                  src={url} 
+                  alt={`Gallery ${idx}`} 
+                  onClick={() => setSelectedGalleryImage(url)}
+                  className={`h-20 w-20 object-cover rounded-md border-2 border-transparent hover:border-brand-pink cursor-pointer transition-all`} 
+                />
+              </div>
+            ))}
+            {photo && type === ItemType.Kombination && (
+              <div className="relative">
+                <img 
+                  src={photo} 
+                  alt="Cover" 
+                  onClick={() => setSelectedGalleryImage(photo)}
+                  className="h-20 w-20 object-cover rounded-md border-2 border-brand-pink cursor-pointer shadow-md" 
+                />
+                <div className="absolute top-0 right-0 p-0.5 bg-brand-pink text-brand-text rounded-bl-md rounded-tr-md">
+                  <MaterialIcon name="check" className="text-[10px]" />
+                </div>
+                <span className="absolute -bottom-4 left-0 right-0 text-center text-[9px] font-bold text-brand-pink uppercase tracking-tighter">Cover</span>
+              </div>
+            )}
+            <label className="h-20 w-20 flex flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 dark:border-zinc-600 hover:border-brand-pink cursor-pointer transition-colors bg-white dark:bg-zinc-700">
+              <MaterialIcon name="add_a_photo" className="text-gray-400" />
+              <span className="text-[10px] text-gray-400 mt-1">Neu</span>
+              <input
+                type="file"
+                onChange={handleAddGalleryImages}
+                accept="image/*"
+                multiple
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
+      )}
+
+      {selectedGalleryImage && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedGalleryImage(null)}>
+          <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="aspect-square w-full bg-gray-100">
+              <img src={selectedGalleryImage} alt="Selected" className="w-full h-full object-contain" />
+            </div>
+            <div className="p-4 space-y-2">
+              {selectedGalleryImage !== photo && (
+                <button 
+                  type="button"
+                  onClick={() => setAsCover(selectedGalleryImage)}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-brand-pink text-brand-text rounded-xl font-bold hover:bg-brand-pink-dark transition-colors"
+                >
+                  <MaterialIcon name="photo_camera" />
+                  Als Cover festlegen
+                </button>
+              )}
+              <button 
+                type="button"
+                onClick={() => handleDeleteGalleryImage(selectedGalleryImage)}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors"
+              >
+                <MaterialIcon name="delete" />
+                Löschen
+              </button>
+              <button 
+                type="button"
+                onClick={() => setSelectedGalleryImage(null)}
+                className="w-full py-3 text-gray-500 font-semibold hover:text-gray-700 transition-colors"
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {editingImage && (
         <ImageEditor
           image={editingImage}
@@ -194,7 +334,9 @@ const AddItemForm: React.FC<ItemFormProps> = ({ onAddItem, onUpdateItem, onDelet
         <div>
           <label htmlFor="type" className={labelBaseClasses}>Kategorie</label>
           <select id="type" value={type} onChange={(e) => setType(e.target.value as ItemType)} className={inputBaseClasses}>
-            {Object.values(ItemType).map(t => <option key={t} value={t}>{t}</option>)}
+            {Object.values(ItemType)
+              .filter(t => t !== ItemType.Kombination || (initialData && initialData.type === ItemType.Kombination))
+              .map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         {![ItemType.Henkel, ItemType.Accessoire].includes(type) && (

@@ -26,10 +26,10 @@ type Theme = 'light' | 'dark';
 const App: React.FC = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [filters, setFilters] = useState<Filters>({
-    type: 'all',
-    shape: 'all',
-    color: 'all',
-    soldStatus: 'all',
+    type: [],
+    shape: [],
+    color: [],
+    soldStatus: 'in_collection',
   });
   const [sortBy, setSortBy] = useState<SortBy>(SortBy.Name);
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,6 +38,7 @@ const App: React.FC = () => {
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isKombiBuilderOpen, setIsKombiBuilderOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [theme, setTheme] = useState<Theme>('light');
@@ -330,9 +331,9 @@ const App: React.FC = () => {
     result = result.filter(item => {
       if (filters.soldStatus === 'sold' && !item.isSold) return false;
       if (filters.soldStatus === 'in_collection' && item.isSold) return false;
-      if (filters.type !== 'all' && item.type !== filters.type) return false;
-      if (filters.shape !== 'all' && (![ItemType.Körper, ItemType.Klappe].includes(item.type) || item.shape !== filters.shape)) return false;
-      if (filters.color !== 'all' && !item.color.includes(filters.color)) return false;
+      if (filters.type.length > 0 && !filters.type.includes(item.type)) return false;
+      if (filters.shape.length > 0 && (![ItemType.Körper, ItemType.Klappe, ItemType.Kombination].includes(item.type) || !filters.shape.includes(item.shape as any))) return false;
+      if (filters.color.length > 0 && !filters.color.some(c => item.color.includes(c))) return false;
       return true;
     });
 
@@ -356,6 +357,47 @@ const App: React.FC = () => {
 
     return result;
   }, [items, filters, sortBy, searchTerm]);
+
+  const activeFiltersCount = useMemo(() => {
+    return filters.type.length + filters.shape.length + filters.color.length;
+  }, [filters]);
+
+  const activeFilterPills = useMemo(() => {
+    const pills: { key: string, label: string, filterCategory: keyof Filters | 'search', value?: string }[] = [];
+    filters.type.forEach(t => pills.push({ key: `type-${t}`, label: `Art: ${t}`, filterCategory: 'type', value: t }));
+    filters.shape.forEach(s => pills.push({ key: `shape-${s}`, label: `Form: ${s}`, filterCategory: 'shape', value: s }));
+    filters.color.forEach(c => pills.push({ key: `color-${c}`, label: `Farbe: ${c}`, filterCategory: 'color', value: c }));
+    if (filters.soldStatus === 'sold') pills.push({ key: 'soldStatus', label: 'Status: Verkauft', filterCategory: 'soldStatus' });
+    if (searchTerm) pills.push({ key: 'search', label: `Suche: "${searchTerm}"`, filterCategory: 'search' });
+    return pills;
+  }, [filters, searchTerm]);
+
+  const removeFilter = (pill: { category: keyof Filters | 'search', value?: string }) => {
+    if (pill.category === 'search') {
+      setSearchTerm('');
+      return;
+    }
+    if (pill.category === 'soldStatus') {
+      setFilters(prev => ({ ...prev, soldStatus: 'in_collection' }));
+      return;
+    }
+    if (pill.value) {
+      setFilters(prev => ({
+        ...prev,
+        [pill.category]: (prev[pill.category as keyof Filters] as string[]).filter(item => item !== pill.value)
+      }));
+    }
+  };
+
+  const resetAllFilters = () => {
+    setFilters({
+      type: [],
+      shape: [],
+      color: [],
+      soldStatus: 'in_collection',
+    });
+    setSearchTerm('');
+  };
 
   if (authLoading || itemsLoading) {
     return <LoadingScreen />;
@@ -432,10 +474,14 @@ const App: React.FC = () => {
                         <button onClick={() => setViewMode('list')} className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${viewMode === 'list' ? 'bg-brand-pink text-brand-text' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600'}`} aria-label="Listen-Ansicht">
                           <MaterialIcon name="view_agenda" className="text-xl" />
                         </button>
+                        <div className="h-6 border-l border-gray-300 dark:border-zinc-600 mx-1"></div>
+                        <button onClick={() => setIsStatsModalOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600 focus:outline-none" aria-label="Statistik anzeigen" title="Statistik anzeigen">
+                          <MaterialIcon name="bar_chart" className="text-xl" />
+                        </button>
                       </div>
                       <div className="h-6 border-l border-gray-300 dark:border-zinc-600 mx-2"></div>
-                      <button onClick={() => setIsStatsModalOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600 focus:outline-none" aria-label="Statistik anzeigen" title="Statistik anzeigen">
-                        <MaterialIcon name="bar_chart" className="text-xl" />
+                      <button onClick={() => setIsSearchOpen(prev => !prev)} className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors focus:outline-none ${isSearchOpen ? 'bg-brand-pink text-brand-text' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600'}`} aria-label="Suche anzeigen/verstecken" title="Suche">
+                        <MaterialIcon name="search" className="text-xl" />
                       </button>
                       <div className="h-6 border-l border-gray-300 dark:border-zinc-600 mx-2"></div>
                       <button onClick={() => setIsKombiBuilderOpen(true)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-brand-text bg-brand-pink hover:bg-brand-pink-dark focus:outline-none" title="Eine neue Kombination aus bestehenden Teilen erstellen">
@@ -460,13 +506,22 @@ const App: React.FC = () => {
                         <button onClick={() => setViewMode('list')} className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${viewMode === 'list' ? 'bg-brand-pink text-brand-text' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600'}`} aria-label="Listen-Ansicht">
                           <MaterialIcon name="view_agenda" className="text-xl" />
                         </button>
-                      </div>
-                      <div className="flex items-center gap-2">
+                        <div className="h-6 border-l border-gray-300 dark:border-zinc-600 mx-1"></div>
                         <button onClick={() => setIsStatsModalOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600 focus:outline-none" aria-label="Statistik anzeigen" title="Statistik anzeigen">
                           <MaterialIcon name="bar_chart" className="text-xl" />
                         </button>
-                        <button onClick={() => setIsFiltersOpen(prev => !prev)} className={`w-10 h-10 flex items-center justify-center rounded-lg focus:outline-none ${isFiltersOpen ? 'bg-brand-pink text-brand-text' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600'}`} aria-label="Filter anzeigen/verstecken">
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setIsSearchOpen(prev => !prev)} className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors focus:outline-none ${isSearchOpen ? 'bg-brand-pink text-brand-text' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600'}`} aria-label="Suche anzeigen/verstecken" title="Suche">
+                          <MaterialIcon name="search" className="text-xl" />
+                        </button>
+                        <button onClick={() => setIsFiltersOpen(prev => !prev)} className={`w-10 h-10 flex items-center justify-center rounded-lg focus:outline-none relative ${isFiltersOpen ? 'bg-brand-pink text-brand-text' : 'bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-zinc-600'}`} aria-label="Filter anzeigen/verstecken">
                           <MaterialIcon name="filter_alt" className="text-xl" fill={true} />
+                          {!isFiltersOpen && activeFiltersCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-pink text-[10px] font-bold text-brand-text border-2 border-gray-50 dark:border-zinc-900 animate-in zoom-in duration-200">
+                              {activeFiltersCount}
+                            </span>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -483,6 +538,33 @@ const App: React.FC = () => {
                     </div>
                   </div>
 
+                  {isSearchOpen && (
+                    <div className="mb-4 px-4 sm:px-0 animate-in slide-in-from-top-2 fade-in duration-200 w-full">
+                      <div className="relative w-full">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          <MaterialIcon name="search" className="text-gray-400 text-xl" />
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Suchen..."
+                          autoFocus
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink dark:bg-zinc-700 dark:border-zinc-600 dark:placeholder-zinc-400 dark:text-white bg-white"
+                        />
+                        {searchTerm && (
+                          <button
+                            onClick={() => setSearchTerm('')}
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                            aria-label="Suche zurücksetzen"
+                          >
+                            <MaterialIcon name="close" className="text-xl" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className={`${isFiltersOpen ? 'block' : 'hidden'} md:block mb-8`}>
                     <FilterControls
                       filters={filters}
@@ -496,28 +578,31 @@ const App: React.FC = () => {
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                       Zeige {filteredAndSortedItems.length} von {items.length} Teilen
                     </div>
-                    <div className="relative w-full md:w-auto md:max-w-xs">
-                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <MaterialIcon name="search" className="text-gray-400 text-xl" />
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Suchen..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-pink focus:border-brand-pink dark:bg-zinc-700 dark:border-zinc-600 dark:placeholder-zinc-400 dark:text-white bg-white"
-                      />
-                      {searchTerm && (
+                  </div>
+
+                  {activeFilterPills.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 mb-6 px-4 sm:px-0">
+                      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mr-1">Filter:</span>
+                      {activeFilterPills.map(pill => (
                         <button
-                          onClick={() => setSearchTerm('')}
-                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                          aria-label="Suche zurücksetzen"
+                          key={pill.key}
+                          onClick={() => removeFilter({ category: pill.filterCategory, value: pill.value })}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-brand-pink/10 dark:bg-brand-pink/20 border border-brand-pink/30 hover:border-brand-pink text-brand-pink dark:text-brand-pink-dark rounded-full text-sm font-medium transition-all group"
                         >
-                          <MaterialIcon name="close" className="text-xl" />
+                          {pill.label}
+                          <MaterialIcon name="close" className="text-sm opacity-60 group-hover:opacity-100" />
+                        </button>
+                      ))}
+                      {activeFilterPills.length > 1 && (
+                        <button
+                          onClick={resetAllFilters}
+                          className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-brand-pink dark:hover:text-brand-pink-dark underline underline-offset-2 ml-2 transition-colors"
+                        >
+                          Alle zurücksetzen
                         </button>
                       )}
                     </div>
-                  </div>
+                  )}
 
                   {filteredAndSortedItems.length > 0 ? (
                     viewMode === 'grid' ? (
@@ -528,7 +613,6 @@ const App: React.FC = () => {
                             item={item}
                             onEdit={openEditModal}
                             onUpdate={handleUpdateItem}
-                            activeColorFilter={filters.color}
                           />
                         ))}
                       </div>
